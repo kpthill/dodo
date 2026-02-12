@@ -1,8 +1,8 @@
-# Dodo - Lispish Interpreter Project
+# Dodo Interpreter Project
 
 ## What This Is
 
-Patrick is implementing the Lispish programming language (a small, purely functional, Lisp-style language) as a learning exercise. The spec is in `lispish-spec.md`.
+Patrick is implementing the Dodo programming language (a small, purely functional, Lisp-style language) as a learning exercise. The spec is in `dodo-spec.md`.
 
 Agents assist with:
 - Workspace setup and project organization
@@ -22,7 +22,7 @@ The spec version follows a `major.minor.intrasession` scheme:
 - **minor**: Bumped when wrapping up for the day (end-of-session).
 - **major**: Reserved for milestones. Agents may suggest bumping major but should ask first. Since this is a learning project not intended for release, major bumps are unlikely.
 
-Current spec version: `0.1.0`
+Current spec version: `0.1.1`
 
 ## Git Workflow
 

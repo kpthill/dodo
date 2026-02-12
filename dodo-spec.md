@@ -1,8 +1,8 @@
-# Lispish Language Specification
+# Dodo Language Specification
 
-**Version:** 0.1.0 (Draft)
+**Version:** 0.1.1 (Draft)
 
-Lispish is a small, purely functional, expression-based programming language with Lisp-style
+Dodo is a small, purely functional, expression-based programming language with Lisp-style
 syntax. It is designed to be implementable in a weekend as a tree-walking interpreter in JavaScript.
 
 ---
@@ -19,7 +19,7 @@ syntax. It is designed to be implementable in a weekend as a tree-walking interp
 
 ## 2. Types
 
-Lispish is dynamically typed. Values carry their type at runtime.
+Dodo is dynamically typed. Values carry their type at runtime.
 
 | Type     | Literal Examples               | Notes                                    |
 |----------|--------------------------------|------------------------------------------|
@@ -407,7 +407,7 @@ These are thin wrappers around JS I/O, included as built-ins for convenience:
 
 ## 7. JavaScript FFI
 
-The `js` special form allows calling into JavaScript from Lispish. This is the only mechanism for side effects.
+The `js` special form allows calling into JavaScript from Dodo. This is the only mechanism for side effects.
 
 ### 7.1 Calling JS Functions
 
@@ -419,9 +419,9 @@ The `js` special form allows calling into JavaScript from Lispish. This is the o
 
 Syntax: `(js <string-path> arg1 arg2 ...)`
 
-The first argument is a string naming a JS function accessible from the global scope (or via dot-path traversal). The remaining arguments are evaluated and passed to the function. Lispish values are converted to JS values at the boundary:
+The first argument is a string naming a JS function accessible from the global scope (or via dot-path traversal). The remaining arguments are evaluated and passed to the function. Dodo values are converted to JS values at the boundary:
 
-| Lispish        | JS                |
+| Dodo        | JS                |
 |----------------|-------------------|
 | `int`, `float` | `number`          |
 | `bool`         | `boolean`         |
@@ -431,7 +431,7 @@ The first argument is a string naming a JS function accessible from the global s
 | `map`          | plain `Object` / `Map` |
 | `fn`           | `Function` (wrapped) |
 
-The return value is converted back from JS to Lispish using the inverse mapping. `undefined` maps to `nil`. JS objects with non-string keys become Lispish maps.
+The return value is converted back from JS to Dodo using the inverse mapping. `undefined` maps to `nil`. JS objects with non-string keys become Dodo maps.
 
 ### 7.2 Importing Modules
 
@@ -440,7 +440,7 @@ The return value is converted back from JS to Lispish using the inverse mapping.
 (def data (js/method fs "readFileSync" "data.txt" "utf8"))
 ```
 
-- `(js/import <string>)` — calls `require()` with the given module name. Returns the module object as a Lispish map.
+- `(js/import <string>)` — calls `require()` with the given module name. Returns the module object as a Dodo map.
 - `(js/method <object> <method-name> args...)` — calls a method on a JS object.
 
 ### 7.3 Accessing Properties
@@ -455,7 +455,7 @@ The return value is converted back from JS to Lispish using the inverse mapping.
 
 ### 7.4 Wrapping JS Libraries
 
-The idiomatic way to use a JS library is to write thin Lispish wrappers:
+The idiomatic way to use a JS library is to write thin Dodo wrappers:
 
 ```
 (def fs (js/import "fs"))
@@ -475,10 +475,10 @@ The idiomatic way to use a JS library is to write thin Lispish wrappers:
 
 ## 8. Program Structure
 
-A Lispish program is a sequence of top-level expressions. They are evaluated in order. The program's result is the value of the last expression.
+A Dodo program is a sequence of top-level expressions. They are evaluated in order. The program's result is the value of the last expression.
 
 ```
-; fibonacci.lsp
+; fibonacci.dodo
 
 (defn fib (n)
   (match n
@@ -491,7 +491,7 @@ A Lispish program is a sequence of top-level expressions. They are evaluated in 
 
 ### 8.1 File Extension
 
-`.lsp` (suggested)
+`.dodo` (suggested)
 
 ### 8.2 Entry Point
 
@@ -501,7 +501,7 @@ The interpreter evaluates all top-level expressions in the file sequentially. Th
 
 ## 9. Scoping Rules
 
-Lispish uses **lexical scoping**. Closures capture their definition environment.
+Dodo uses **lexical scoping**. Closures capture their definition environment.
 
 ```
 (defn make-adder (n)
@@ -526,7 +526,7 @@ The following conditions produce runtime errors:
 - Non-exhaustive match (no pattern matches)
 - Index out of bounds (`nth`, `str-slice`)
 - Division by zero
-- FFI errors (JS exceptions are re-raised as Lispish errors)
+- FFI errors (JS exceptions are re-raised as Dodo errors)
 
 **Design note:** For a v0.2, you might add a `(try expr (catch e handler))` form, but it's fine to skip for a weekend project. Errors simply crash with a stack trace.
 
@@ -695,4 +695,4 @@ list  map
 
 ## Appendix B: Operator Precedence
 
-Not applicable — Lispish has no infix operators. All operations use prefix notation with explicit parentheses.
+Not applicable — Dodo has no infix operators. All operations use prefix notation with explicit parentheses.
