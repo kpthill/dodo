@@ -42,3 +42,6 @@ reading in Emacs. Tables and code blocks are exempt.
 - Commit every time changes are accepted.
 - Bump the intrasession version in the spec on each commit that touches it.
 - Bump the minor version at end-of-day wrap-up.
+- Only include `Co-Authored-By: Claude` in commits where Claude actually
+  authored or co-authored the changes. Patrick's own code (e.g. dodo.js)
+  should be committed by Patrick without the co-author tag.
