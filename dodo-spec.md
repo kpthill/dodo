@@ -1,9 +1,10 @@
 # Dodo Language Specification
 
-**Version:** 0.1.1 (Draft)
+**Version:** 0.1.2 (Draft)
 
-Dodo is a small, purely functional, expression-based programming language with Lisp-style
-syntax. It is designed to be implementable in a weekend as a tree-walking interpreter in JavaScript.
+Dodo is a small, purely functional, expression-based programming language
+with Lisp-style syntax. It is designed to be implementable in a weekend as a
+tree-walking interpreter in JavaScript.
 
 ---
 
@@ -11,9 +12,12 @@ syntax. It is designed to be implementable in a weekend as a tree-walking interp
 
 - **Expression-based**: Everything is an expression that returns a value.
 - **Lisp-style syntax**: S-expressions make parsing trivial.
-- **Purely functional**: All bindings are immutable. Side effects happen only through the JS FFI.
-- **No if, no loops**: Use `match` with destructuring for control flow, and `map`/`filter`/`fold`/recursion instead of loops.
-- **Weekend-sized**: The entire language should be implementable in a couple of days.
+- **Purely functional**: All bindings are immutable. Side effects happen only
+  through the JS FFI.
+- **No if, no loops**: Use `match` with destructuring for control flow, and
+  `map`/`filter`/`fold`/recursion instead of loops.
+- **Weekend-sized**: The entire language should be implementable in a couple
+  of days.
 
 ---
 
@@ -34,7 +38,9 @@ Dodo is dynamically typed. Values carry their type at runtime.
 
 ### 2.1 Type Coercion
 
-There is no implicit type coercion. `(+ 1 "hello")` is a runtime error. Use explicit conversion functions (`int->string`, `string->int`, etc.) when needed.
+There is no implicit type coercion. `(+ 1 "hello")` is a runtime error. Use
+explicit conversion functions (`int->string`, `string->int`, etc.) when
+needed.
 
 ---
 
@@ -48,7 +54,8 @@ There is no implicit type coercion. `(+ 1 "hello")` is a runtime error. Use expl
 
 ### 3.2 Identifiers
 
-Identifiers may contain letters, digits, `-`, `_`, `?`, `!`, `>`, and `*`. They must start with a letter, `_`, or one of the special characters `?!`.
+Identifiers may contain letters, digits, `-`, `_`, `?`, `!`, `>`, and `*`.
+They must start with a letter, `_`, or one of the special characters `?!`.
 
 ```
 x
@@ -60,16 +67,20 @@ int->string
 
 ### 3.3 Whitespace
 
-Whitespace (spaces, tabs, newlines) separates tokens but is otherwise insignificant. Commas are treated as whitespace (optional stylistic separator).
+Whitespace (spaces, tabs, newlines) separates tokens but is otherwise
+insignificant. Commas are treated as whitespace (optional stylistic
+separator).
 
 ### 3.4 Numeric Literals
 
 - Integers: optional `-`, then one or more digits. `42`, `-7`, `0`.
-- Floats: optional `-`, digits, `.`, digits. `3.14`, `-0.5`. At least one digit must appear on each side of the `.`.
+- Floats: optional `-`, digits, `.`, digits. `3.14`, `-0.5`. At least one
+  digit must appear on each side of the `.`.
 
 ### 3.5 String Literals
 
-Strings are double-quoted. Supported escape sequences: `\\`, `\"`, `\n`, `\t`, `\r`.
+Strings are double-quoted. Supported escape sequences: `\\`, `\"`, `\n`,
+`\t`, `\r`.
 
 ```
 "hello world"
@@ -83,11 +94,13 @@ Strings are double-quoted. Supported escape sequences: `\\`, `\"`, `\n`, `\t`, `
 
 ### 4.1 Literals
 
-Integers, floats, booleans (`true`, `false`), strings, and `nil` are all literal expressions that evaluate to themselves.
+Integers, floats, booleans (`true`, `false`), strings, and `nil` are all
+literal expressions that evaluate to themselves.
 
 ### 4.2 Identifiers
 
-A bare identifier evaluates to the value bound to it in the current environment. It is a runtime error to reference an unbound identifier.
+A bare identifier evaluates to the value bound to it in the current
+environment. It is a runtime error to reference an unbound identifier.
 
 ### 4.3 List and Map Constructors
 
@@ -99,7 +112,8 @@ A bare identifier evaluates to the value bound to it in the current environment.
 (map)                    ; => {}
 ```
 
-All arguments to `list` and `map` are evaluated. `map` takes an even number of arguments as alternating key-value pairs.
+All arguments to `list` and `map` are evaluated. `map` takes an even number
+of arguments as alternating key-value pairs.
 
 ### 4.4 Function Calls
 
@@ -107,11 +121,14 @@ All arguments to `list` and `map` are evaluated. `map` takes an even number of a
 (f arg1 arg2 ...)
 ```
 
-The first element is evaluated (must produce a function), then all arguments are evaluated left-to-right, then the function is applied. All functions are called by value.
+The first element is evaluated (must produce a function), then all arguments
+are evaluated left-to-right, then the function is applied. All functions are
+called by value.
 
 ### 4.5 Special Forms
 
-The following are **special forms** — they have custom evaluation rules and cannot be shadowed or redefined.
+The following are **special forms** — they have custom evaluation rules and
+cannot be shadowed or redefined.
 
 #### `def` — Top-level and Local Bindings
 
@@ -120,9 +137,11 @@ The following are **special forms** — they have custom evaluation rules and ca
 (def greeting "hello")
 ```
 
-Binds a name to a value in the current scope. The binding is immutable. `def` returns `nil`.
+Binds a name to a value in the current scope. The binding is immutable.
+`def` returns `nil`.
 
-Bindings are visible to all subsequent expressions in the same scope. `def` may appear at the top level or inside a `do` block.
+Bindings are visible to all subsequent expressions in the same scope. `def`
+may appear at the top level or inside a `do` block.
 
 #### `defn` — Function Definition (Sugar)
 
@@ -131,7 +150,8 @@ Bindings are visible to all subsequent expressions in the same scope. `def` may 
   (+ a b))
 ```
 
-Equivalent to `(def add (fn (a b) (+ a b)))`. The function is bound in the current scope and may refer to itself recursively by name.
+Equivalent to `(def add (fn (a b) (+ a b)))`. The function is bound in the
+current scope and may refer to itself recursively by name.
 
 #### `fn` — Anonymous Function (Lambda)
 
@@ -141,7 +161,8 @@ Equivalent to `(def add (fn (a b) (+ a b)))`. The function is bound in the curre
 (fn () 42)
 ```
 
-Creates a closure capturing the current environment. The body is a single expression. Use `do` for multiple expressions.
+Creates a closure capturing the current environment. The body is a single
+expression. Use `do` for multiple expressions.
 
 #### `do` — Sequence
 
@@ -152,7 +173,10 @@ Creates a closure capturing the current environment. The body is a single expres
   (+ x y))
 ```
 
-Evaluates each expression in order in a new child scope. Returns the value of the last expression. `def` bindings inside a `do` are visible to subsequent expressions within the same `do`, but do not leak to the outer scope.
+Evaluates each expression in order in a new child scope. Returns the value
+of the last expression. `def` bindings inside a `do` are visible to
+subsequent expressions within the same `do`, but do not leak to the outer
+scope.
 
 #### `let` — Local Bindings (Sugar)
 
@@ -162,7 +186,9 @@ Evaluates each expression in order in a new child scope. Returns the value of th
   (+ x y))
 ```
 
-Equivalent to a `do` with `def` bindings followed by a body expression. Bindings are evaluated sequentially (each binding can see the previous ones).
+Equivalent to a `do` with `def` bindings followed by a body expression.
+Bindings are evaluated sequentially (each binding can see the previous
+ones).
 
 ```
 (let ((x 10)
@@ -181,7 +207,9 @@ The primary control flow mechanism. See **Section 5**.
 (or expr1 expr2 ...)
 ```
 
-`and` evaluates left-to-right, returning the first falsy value (`false` or `nil`), or the last value if all are truthy. `or` evaluates left-to-right, returning the first truthy value, or the last value if all are falsy.
+`and` evaluates left-to-right, returning the first falsy value (`false` or
+`nil`), or the last value if all are truthy. `or` evaluates left-to-right,
+returning the first truthy value, or the last value if all are falsy.
 
 These are special forms (not functions) because they short-circuit.
 
@@ -193,7 +221,8 @@ See **Section 7**.
 
 ## 5. Pattern Matching
 
-`match` is the only branching construct. It replaces `if`, `cond`, and `switch`.
+`match` is the only branching construct. It replaces `if`, `cond`, and
+`switch`.
 
 ### 5.1 Syntax
 
@@ -204,7 +233,9 @@ See **Section 7**.
   ...)
 ```
 
-`expr` is evaluated once. Each pattern is tried in order. The body of the first matching pattern is evaluated in a scope extended with any bindings introduced by the pattern. It is a runtime error if no pattern matches.
+`expr` is evaluated once. Each pattern is tried in order. The body of the
+first matching pattern is evaluated in a scope extended with any bindings
+introduced by the pattern. It is a runtime error if no pattern matches.
 
 ### 5.2 Pattern Types
 
@@ -233,7 +264,8 @@ Matches if the value is equal to the literal.
 (x body)
 ```
 
-Any identifier that is not `_`, `true`, `false`, or `nil` and does not appear as a constructor pattern. Matches any value and binds it to the name.
+Any identifier that is not `_`, `true`, `false`, or `nil` and does not
+appear as a constructor pattern. Matches any value and binds it to the name.
 
 #### List Destructuring
 
@@ -244,7 +276,8 @@ Any identifier that is not `_`, `true`, `false`, or `nil` and does not appear as
 ((list 1 _ c) body)               ; patterns can be nested/mixed
 ```
 
-The `(list ...)` pattern mirrors the constructor. The `.` (rest) operator captures the tail as a list.
+The `(list ...)` pattern mirrors the constructor. The `.` (rest) operator
+captures the tail as a list.
 
 #### Map Destructuring
 
@@ -253,7 +286,8 @@ The `(list ...)` pattern mirrors the constructor. The `.` (rest) operator captur
 ((map "name" name . rest) body)   ; binds matching key and rest of map
 ```
 
-Map patterns match if the map contains *at least* the specified keys. Additional keys are ignored unless captured with `. rest`.
+Map patterns match if the map contains *at least* the specified keys.
+Additional keys are ignored unless captured with `. rest`.
 
 #### Nested Patterns
 
@@ -278,11 +312,15 @@ A pattern may include a `when` guard:
   (_ "zero"))
 ```
 
-The guard expression is evaluated after a successful structural match, with the pattern's bindings in scope. If the guard returns falsy, matching continues to the next branch.
+The guard expression is evaluated after a successful structural match, with
+the pattern's bindings in scope. If the guard returns falsy, matching
+continues to the next branch.
 
 ### 5.3 Exhaustiveness
 
-There is no compile-time exhaustiveness check. A runtime error is raised if no pattern matches. Using a wildcard `_` or variable pattern as the final branch ensures a match.
+There is no compile-time exhaustiveness check. A runtime error is raised if
+no pattern matches. Using a wildcard `_` or variable pattern as the final
+branch ensures a match.
 
 ---
 
@@ -290,7 +328,8 @@ There is no compile-time exhaustiveness check. A runtime error is raised if no p
 
 ### 6.1 Arithmetic
 
-All arithmetic operators work on both ints and floats. Mixing int and float promotes the result to float.
+All arithmetic operators work on both ints and floats. Mixing int and float
+promotes the result to float.
 
 | Function    | Example            | Notes                         |
 |-------------|--------------------|-------------------------------|
@@ -302,7 +341,9 @@ All arithmetic operators work on both ints and floats. Mixing int and float prom
 
 ### 6.2 Comparison
 
-All comparisons return `bool`. `=` works on any type (structural equality for lists/maps). The ordering operators (`<`, `>`, `<=`, `>=`) work on numbers and strings (lexicographic).
+All comparisons return `bool`. `=` works on any type (structural equality
+for lists/maps). The ordering operators (`<`, `>`, `<=`, `>=`) work on
+numbers and strings (lexicographic).
 
 | Function | Example                 |
 |----------|-------------------------|
@@ -396,7 +437,8 @@ All comparisons return `bool`. `=` works on any type (structural equality for li
 
 ### 6.8 I/O (Via FFI Convenience Wrappers)
 
-These are thin wrappers around JS I/O, included as built-ins for convenience:
+These are thin wrappers around JS I/O, included as built-ins for
+convenience:
 
 | Function  | Example                    | Notes                      |
 |-----------|----------------------------|----------------------------|
@@ -407,7 +449,8 @@ These are thin wrappers around JS I/O, included as built-ins for convenience:
 
 ## 7. JavaScript FFI
 
-The `js` special form allows calling into JavaScript from Dodo. This is the only mechanism for side effects.
+The `js` special form allows calling into JavaScript from Dodo. This is the
+only mechanism for side effects.
 
 ### 7.1 Calling JS Functions
 
@@ -419,19 +462,24 @@ The `js` special form allows calling into JavaScript from Dodo. This is the only
 
 Syntax: `(js <string-path> arg1 arg2 ...)`
 
-The first argument is a string naming a JS function accessible from the global scope (or via dot-path traversal). The remaining arguments are evaluated and passed to the function. Dodo values are converted to JS values at the boundary:
+The first argument is a string naming a JS function accessible from the
+global scope (or via dot-path traversal). The remaining arguments are
+evaluated and passed to the function. Dodo values are converted to JS values
+at the boundary:
 
-| Dodo        | JS                |
-|----------------|-------------------|
-| `int`, `float` | `number`          |
-| `bool`         | `boolean`         |
-| `string`       | `string`          |
-| `nil`          | `null`            |
-| `list`         | `Array`           |
-| `map`          | plain `Object` / `Map` |
+| Dodo           | JS                   |
+|----------------|----------------------|
+| `int`, `float` | `number`             |
+| `bool`         | `boolean`            |
+| `string`       | `string`             |
+| `nil`          | `null`               |
+| `list`         | `Array`              |
+| `map`          | plain `Object`/`Map` |
 | `fn`           | `Function` (wrapped) |
 
-The return value is converted back from JS to Dodo using the inverse mapping. `undefined` maps to `nil`. JS objects with non-string keys become Dodo maps.
+The return value is converted back from JS to Dodo using the inverse
+mapping. `undefined` maps to `nil`. JS objects with non-string keys become
+Dodo maps.
 
 ### 7.2 Importing Modules
 
@@ -440,8 +488,10 @@ The return value is converted back from JS to Dodo using the inverse mapping. `u
 (def data (js/method fs "readFileSync" "data.txt" "utf8"))
 ```
 
-- `(js/import <string>)` — calls `require()` with the given module name. Returns the module object as a Dodo map.
-- `(js/method <object> <method-name> args...)` — calls a method on a JS object.
+- `(js/import <string>)` — calls `require()` with the given module name.
+  Returns the module object as a Dodo map.
+- `(js/method <object> <method-name> args...)` — calls a method on a JS
+  object.
 
 ### 7.3 Accessing Properties
 
@@ -451,7 +501,8 @@ The return value is converted back from JS to Dodo using the inverse mapping. `u
 (def a (js/get obj "a"))            ; => 1
 ```
 
-- `(js/get <object-or-string> <property-name>)` — accesses a property. If the first argument is a string, it is treated as a global path.
+- `(js/get <object-or-string> <property-name>)` — accesses a property. If
+  the first argument is a string, it is treated as a global path.
 
 ### 7.4 Wrapping JS Libraries
 
@@ -475,7 +526,8 @@ The idiomatic way to use a JS library is to write thin Dodo wrappers:
 
 ## 8. Program Structure
 
-A Dodo program is a sequence of top-level expressions. They are evaluated in order. The program's result is the value of the last expression.
+A Dodo program is a sequence of top-level expressions. They are evaluated in
+order. The program's result is the value of the last expression.
 
 ```
 ; fibonacci.dodo
@@ -495,13 +547,15 @@ A Dodo program is a sequence of top-level expressions. They are evaluated in ord
 
 ### 8.2 Entry Point
 
-The interpreter evaluates all top-level expressions in the file sequentially. There is no `main` function.
+The interpreter evaluates all top-level expressions in the file
+sequentially. There is no `main` function.
 
 ---
 
 ## 9. Scoping Rules
 
-Dodo uses **lexical scoping**. Closures capture their definition environment.
+Dodo uses **lexical scoping**. Closures capture their definition
+environment.
 
 ```
 (defn make-adder (n)
@@ -511,13 +565,15 @@ Dodo uses **lexical scoping**. Closures capture their definition environment.
 (add5 10)  ; => 15
 ```
 
-Inner `def` bindings shadow outer ones within their scope. There is no mutation — a name always refers to the same value within its scope.
+Inner `def` bindings shadow outer ones within their scope. There is no
+mutation — a name always refers to the same value within its scope.
 
 ---
 
 ## 10. Error Handling
 
-Errors are runtime exceptions. There is no `try/catch` in the language itself.
+Errors are runtime exceptions. There is no `try/catch` in the language
+itself.
 
 The following conditions produce runtime errors:
 - Unbound identifier
@@ -528,7 +584,9 @@ The following conditions produce runtime errors:
 - Division by zero
 - FFI errors (JS exceptions are re-raised as Dodo errors)
 
-**Design note:** For a v0.2, you might add a `(try expr (catch e handler))` form, but it's fine to skip for a weekend project. Errors simply crash with a stack trace.
+**Design note:** For a v0.2, you might add a
+`(try expr (catch e handler))` form, but it's fine to skip for a weekend
+project. Errors simply crash with a stack trace.
 
 ---
 
@@ -636,9 +694,13 @@ This section is non-normative — suggestions for the JS interpreter.
 
 A tree-walking interpreter with three phases:
 
-1. **Tokenizer** — Split input into tokens (parens, strings, numbers, identifiers).
-2. **Parser** — Build an AST from the token stream. Since the syntax is S-expressions, this is essentially just matching balanced parens and classifying the head of each list.
-3. **Evaluator** — Recursively walk the AST, maintaining an environment (scope chain) as a linked list of Maps.
+1. **Tokenizer** — Split input into tokens (parens, strings, numbers,
+   identifiers).
+2. **Parser** — Build an AST from the token stream. Since the syntax is
+   S-expressions, this is essentially just matching balanced parens and
+   classifying the head of each list.
+3. **Evaluator** — Recursively walk the AST, maintaining an environment
+   (scope chain) as a linked list of Maps.
 
 ### 13.2 Environment
 
@@ -661,7 +723,10 @@ class Env {
 
 ### 13.3 Match Implementation
 
-Pattern matching can be implemented as a recursive `matchPattern(pattern, value)` function that returns either `null` (no match) or a `Map<string, value>` of bindings. The evaluator tries each branch and uses the first successful match.
+Pattern matching can be implemented as a recursive
+`matchPattern(pattern, value)` function that returns either `null` (no
+match) or a `Map<string, value>` of bindings. The evaluator tries each
+branch and uses the first successful match.
 
 ### 13.4 FFI Implementation
 
@@ -675,12 +740,14 @@ function resolveJsPath(path) {
 
 ### 13.5 Tail Call Optimization (Stretch Goal)
 
-If you want to support deep recursion without stack overflow, implement TCO for:
+If you want to support deep recursion without stack overflow, implement TCO
+for:
 - The last expression in a `do` block
 - The body of a matched `match` branch
 - The body of a `fn`
 
-This can be done with a trampoline: instead of recursing, return a thunk, and loop at the top level until you get a non-thunk value.
+This can be done with a trampoline: instead of recursing, return a thunk,
+and loop at the top level until you get a non-thunk value.
 
 ---
 
@@ -695,4 +762,5 @@ list  map
 
 ## Appendix B: Operator Precedence
 
-Not applicable — Dodo has no infix operators. All operations use prefix notation with explicit parentheses.
+Not applicable — Dodo has no infix operators. All operations use prefix
+notation with explicit parentheses.
