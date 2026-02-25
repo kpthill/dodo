@@ -5,37 +5,41 @@
 const fs = require('fs');
 const input = fs.readFileSync(process.stdin.fd, 'utf-8');
 
+const LOG_HEAD = 10;
+
 ////////////////////////////////////////////////////////////////////////////////
 // PARSING
 // A parser is a function string -> { result: any, rest: string } | null
 //   - The first case handles a match; the second no match
 // They can be combined by operators:
-//   - seq([parser_a, parser_b]): runs a, then sends its rest to b, and returns the list of all the
+//   - seqUntokenized([parser_a, parser_b]): runs a, then sends its rest to b, and returns the list of all the
 //     results
+//   - seq([parser_a, parser_b]): equivalent to seqUntokenized([many(whitespace), parser_a, many(whitespace), parser_b, many(whitespace)])
 //   - or([a, b, c]): returns the result of the first of a, b, c that is non-null
+//   - many(parser):
 
-
-function parse(str) {
-
-};
-
-function literal(str) {
+function lit(str) {
   const len = str.length;
-  return (input) =>
-    (input.slice(0, len) === str
-     ? {
-       result: str,
-       rest: input.slice(len)
-     }
-     : null);
+  return (input) => {
+    // console.log("xcxc lit: ", input.slice(0,LOG_HEAD));
+    return (
+      input.slice(0, len) === str
+        ? {
+          result: str,
+          rest: input.slice(len)
+        } : null
+    );
+  }
 }
 
 function regex(re) {
   // Make sure we only match the beginning of the input
   const fixed = re.source.match(/^\^/)
         ? re
-        : new RegExp("^" + re.source);
+        : new RegExp('^' + re.source);
   return (input) => {
+    // console.log("xcxc regex: ", input.slice(0,LOG_HEAD));
+
     const match = fixed.exec(input);
     if (!match) return null;
 
@@ -46,14 +50,13 @@ function regex(re) {
   };
 }
 
-function seq() {
+function seqUntokenized() {
   const parsers = [...arguments];
   return (input) => {
     return parsers.reduce((current, parser) => {
       if (!current) return null;
 
-      // note the trim!!! we're stripping whitespace
-      const res = parser(current.rest.trim());
+      const res = parser(current.rest);
       if (!res) return null;
 
       return {
@@ -67,10 +70,34 @@ function seq() {
   };
 }
 
+function zip(...arrays) {
+  const minLen = Math.min(...(arrays.map(arr => arr.length)));
+  return Array.from({length: minLen}, (_, i) =>
+    arrays.map(arr => arr[i])
+  );
+};
+
+function seq() {
+  const whitespace = regex(/\s*/);
+  const parsers = [...arguments];
+  const spaces = Array(parsers.length).fill(whitespace);
+  const tokenizedParsers = zip(spaces, parsers).flat();
+  return (input) => {
+    // console.log("xcxc seq: ", input.slice(0,LOG_HEAD));
+    const tokenizedParser = seqUntokenized(...tokenizedParsers);
+    const parsed = tokenizedParser(input);
+    return parsed === null ? null : {
+      ...parsed,
+      result: parsed.result.filter((_, i) => i % 2 === 1),
+    };
+  };
+};
+
 function or() {
   const parsers = [...arguments];
-
   return (input) => {
+    // console.log("xcxc or: ", input.slice(0,LOG_HEAD));
+
     for (var i = 0; i < parsers.length; i++) {
       const res = parsers[i](input);
 
@@ -88,15 +115,175 @@ function many(parser) {
     return { result: partial, rest: input };
   }
 
-  return (input) => recur(input, []);
+  return (input) => {
+    // console.log("xcxc many: ", input.slice(0,LOG_HEAD));
+    return recur(input, []);
+  };
 }
 
-const sp = regex(/\s/);
-const oh = literal("oh");
-const hello = literal("hello");
-const howdy = literal("howdy");
-const ohHello = seq(oh, hello);
-const greeting = seq(oh, or(hello, howdy));
-const manyGreetings = many(greeting);
+function oneOrMore(parser) {
+  return seq(parser, many(parser));
+}
 
-console.log(manyGreetings(input));
+const empty = (input) => ({
+  result: [],
+  rest: input,
+});
+
+const fail = (input) => null;
+
+const opt = (parser) => or(
+  parser,
+  empty
+);
+
+// parser :: string => { result, rest }
+// recursive :: (parser => parser) => parser
+// f :: parser
+
+// def here should be a function taking one function argument that will be the function itself being
+// defined
+// const recursive = (definition) => {
+//   function f (input) {
+//     return definition(f)(input);
+//   };
+
+//   return f;
+// };
+
+// const test = recursive((test) => or(
+//   lit('b'),
+//   seq(lit('a'), many(test))
+// ));
+
+// const res = test(input.toString());
+
+// console.log('xcxc result = ', JSON.stringify(res));
+
+// DODO GRAMMAR
+
+// We put all our grammar definitions into an object so that lookups happen at runtime - this allows
+// grammar element to reference each other or themselves. The lazy operator allows us to reference
+// things that haven't been put in the grammar yet.
+const g = {};
+const lazy = (f) => ((input) => f(input));
+
+const lazyN = (name, f) => ((input) => {
+  console.log("xcxc " + name + " lazy input = ", input.slice(0,LOG_HEAD));
+  const parser = f();
+  return parser(input);
+});
+
+const barring = (parser, barred) => {
+  return (input) => {
+    const res = parser(input);
+    if (res === null) return null;
+    if (barred.includes(res.result)) return null;
+    return res;
+  };
+};
+
+const reserved = [
+  'def', 'defn', 'fn', 'do', 'let', 'match', 'and', 'or', 'js',
+  'js/import', 'js/method', 'js/get', 'true', 'false', 'nil',
+  'when', 'list', 'map'
+];
+
+g.program = lazyN("program", () =>
+  many(g.expr)
+);
+
+g.expr = lazyN("expr", () =>
+  or(
+    g.literal,
+    g.identifier,
+    seq(lit('('), g.special, lit(')')),
+    seq(lit('('), oneOrMore(g.expr), lit(')'))
+  )
+);
+
+g.special = lazyN("special", () =>
+  or(
+    seq(lit('def'), g.identifier, g.expr),
+    seq(lit('defn'), g.identifier, lit('('), many(g.identifier), lit(')'), g.expr),
+    seq(lit('fn'), lit('('), many(g.identifier), lit(')'), g.expr),
+    seq(lit('do'), oneOrMore(g.expr)),
+    seq(lit('let'), lit('('), many(g.binding), lit(')'), g.expr),
+    seq(lit('match'), g.expr, many(g.branch)),
+    seq(lit('and'), many(g.expr)),
+    seq(lit('or'), many(g.expr)),
+    seq(lit('js'), g.string, many(g.expr)),
+    seq(lit('js/import'), g.string),
+    seq(lit('js/method'), g.expr, g.string, many(g.expr)),
+    seq(lit('js/get'), g.expr, g.string),
+  )
+);
+
+g.binding = lazyN("binding", () =>
+  seq(lit('('), g.identifier, g.expr, lit(')')),
+);
+
+g.branch = lazyN("branch", () =>
+  seq(lit('('), g.pattern, opt(seq(lit('when'), g.expr)), g.expr, lit(')'))
+);
+
+g.pattern = lazyN("pattern", () =>
+  or(
+    lit('_'),
+    g.literal,
+    g.identifier,
+    seq(lit('('), lit('list'), many(g.listPat), opt(seq(lit('.'), g.identifier)), lit(')')),
+    seq(lit('('), lit('map'), many(g.mapEntry), opt(seq(lit('.'), g.identifier)), lit(')')),
+  )
+);
+
+g.listPat = lazy("listPat", () => g.pattern);
+
+g.mapEntry = lazyN("mapEntry", () =>
+  seq(g.expr, g.pattern)
+);
+
+g.literal = lazyN("literal", () =>
+  or(
+    g.integer,
+    g.float,
+    g.string,
+    lit('true'),
+    lit('false'),
+    lit('nil')
+  )
+);
+
+g.identifier = barring(
+  regex(/[a-zA-Z_?!][a-zA-Z0-9_?!>*-]*/),
+  reserved
+);
+
+g.integer = regex(/-? [0-9]+/);
+g['float'] = regex(/-?[0-9]+.[0-9]+/);
+g.string = regex(/"(\\[\\\"ntr]|[^"\\])*"/);
+g.comment = regex(/;[^\n]*\n/);
+
+const program = g.program;
+res = program(input);
+console.log(JSON.stringify(program(input)));
+
+// const t = {};
+
+// t.start = lazy(() =>
+//   many(t.expr)
+// );
+
+// t.expr = lazy(() =>
+//   or(
+//     fail,
+//     t.letter
+//   )
+// );
+
+// t.letter = lazy(() =>
+//   regex(/[^;]/)
+// );
+
+// const res = t.start(input);
+// console.log(res);

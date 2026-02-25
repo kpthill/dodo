@@ -1,0 +1,27 @@
+(def people
+  (list
+    (map "name" "Alice" "age" 30)
+    (map "name" "Bob" "age" 17)
+    (map "name" "Charlie" "age" 25)
+    (map "name" "Diana" "age" 15)))
+
+(defn adult? (person)
+  (match (>= (get person "age") 18)
+    (true true)
+    (false false)))
+
+(defn greet (person)
+  (str "Hello, " (get person "name") "!"))
+
+(def adults (filter adult? people))
+(def greetings (map greet adults))
+
+(defn print-all (items)
+  (match items
+    ((list) nil)
+    ((list first . rest)
+      (do
+        (println first)
+        (print-all rest)))))
+
+(print-all greetings)
