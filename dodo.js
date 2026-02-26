@@ -18,6 +18,11 @@ const LOG_HEAD = 10;
 //   - or([a, b, c]): returns the result of the first of a, b, c that is non-null
 //   - many(parser):
 
+// commas are treated as whitespace in dodo, so we need a custom expression of this
+function trimWS(s) {
+  return s.replace(/^(\s,)*/, '');
+}
+
 function lit(str) {
   const len = str.length;
   return (input) => {
@@ -56,8 +61,7 @@ function seq() {
     return parsers.reduce((current, parser) => {
       if (!current) return null;
 
-      // xcxc note the trim
-      const res = parser(current.rest.trim());
+      const res = parser(trimWS(current.rest.trim));
       if (!res) return null;
 
       return {
@@ -111,8 +115,7 @@ function or() {
 
 function many(parser) {
   function recur(input, partial) {
-    // xcxc note the trim
-    const res = parser(input.trim());
+    const res = parser(trimWS(input));
     if (res) return recur(res.rest, partial.concat([res.result]));
     return { result: partial, rest: input };
   }
