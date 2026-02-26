@@ -1,6 +1,6 @@
 # Dodo Language Specification
 
-**Version:** 0.2.0 (Draft)
+**Version:** 0.2.1 (Draft)
 
 Dodo is a small, purely functional, expression-based programming language
 with Lisp-style syntax. It is designed to be implementable in a weekend as a
@@ -54,8 +54,12 @@ needed.
 
 ### 3.2 Identifiers
 
-Identifiers may contain letters, digits, `-`, `_`, `?`, `!`, `>`, and `*`.
-They must start with a letter, `_`, or one of the special characters `?!`.
+There are two forms of identifier:
+
+- **Word-style**: starts with a letter, `_`, `?`, or `!`; continues with letters,
+  digits, `_`, `?`, `!`, `>`, `*`, `=`, or `-`. Used for names and predicates.
+- **Operator-style**: one or more characters from `+`, `-`, `*`, `/`, `%`, `<`,
+  `>`, `=`. Used for arithmetic and comparison operators.
 
 ```
 x
@@ -63,6 +67,9 @@ my-var
 empty?
 do-thing!
 int->string
++
+<=
+!=
 ```
 
 ### 3.3 Whitespace
@@ -677,7 +684,8 @@ map-pat-entry = expr ':' pattern ;
 
 literal     = integer | float | string | 'true' | 'false' | 'nil' ;
 
-identifier  = [a-zA-Z_?!][a-zA-Z0-9_?!>*-]* ;
+identifier  = [a-zA-Z_?!][a-zA-Z0-9_?!>*=\-]*
+            | [+\-*/%<>=][+\-*/%<>=]* ;
               (* except reserved words: def, defn, fn, do, let,
                  match, and, or, js, js/import, js/method, js/get,
                  true, false, nil, when *)
