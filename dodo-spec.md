@@ -1,6 +1,6 @@
 # Dodo Language Specification
 
-**Version:** 0.2.1 (Draft)
+**Version:** 0.2.2 (Draft)
 
 Dodo is a small, purely functional, expression-based programming language
 with Lisp-style syntax. It is designed to be implementable in a weekend as a
@@ -635,6 +635,58 @@ project. Errors simply crash with a stack trace.
 ; Output:
 ; Hello, Alice!
 ; Hello, Charlie!
+```
+
+A second example demonstrating map and list destructuring, guard clauses,
+and accumulator-style recursion:
+
+```
+; Classify shapes by size using pattern matching
+
+; Map destructuring: match a specific key value, bind the rest
+(defn area (shape)
+  (match shape
+    ({"kind": "circle",   "radius": r}             (* 3.14159 r r))
+    ({"kind": "rect",     "width": w, "height": h} (* w h))
+    ({"kind": "triangle", "base": b,  "height": h} (/ (* b h) 2))))
+
+; Guard clause: branch on a computed property of the matched value
+(defn label (shape)
+  (match shape
+    (s when (> (area s) 100) (str "large " (get s "kind")))
+    ({"kind": kind}          kind)))
+
+; Head/tail list destructuring with a guard on the head element;
+; accumulates into two lists passed as extra arguments
+(defn split-by-size (shapes)
+  (let ((go (fn (remaining small large)
+               (match remaining
+                 ([]                                [small large])
+                 ([s . rest] when (> (area s) 100) (go rest small (cons s large)))
+                 ([s . rest]                        (go rest (cons s small) large))))))
+    (go shapes [] [])))
+
+(def shapes
+  [{"kind": "circle",   "radius": 3}
+   {"kind": "rect",     "width": 12, "height": 10}
+   {"kind": "triangle", "base": 6,   "height": 4}
+   {"kind": "circle",   "radius": 7}])
+
+; Destructure the [small large] pair returned by split-by-size
+(match (split-by-size shapes)
+  ([small large]
+    (do
+      (println "small:")
+      (fold (fn (_ s) (println (str "  " (label s)))) nil small)
+      (println "large:")
+      (fold (fn (_ s) (println (str "  " (label s)))) nil large))))
+; Output:
+; small:
+;   triangle
+;   circle
+; large:
+;   large circle
+;   large rect
 ```
 
 ---
