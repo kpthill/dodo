@@ -50,13 +50,14 @@ function regex(re) {
   };
 }
 
-function seqUntokenized() {
+function seq() {
   const parsers = [...arguments];
   return (input) => {
     return parsers.reduce((current, parser) => {
       if (!current) return null;
 
-      const res = parser(current.rest);
+      // xcxc note the trim
+      const res = parser(current.rest.trim());
       if (!res) return null;
 
       return {
@@ -77,21 +78,21 @@ function zip(...arrays) {
   );
 };
 
-function seq() {
-  const whitespace = regex(/\s*/);
-  const parsers = [...arguments];
-  const spaces = Array(parsers.length).fill(whitespace);
-  const tokenizedParsers = zip(spaces, parsers).flat();
-  return (input) => {
-    // console.log("xcxc seq: ", input.slice(0,LOG_HEAD));
-    const tokenizedParser = seqUntokenized(...tokenizedParsers);
-    const parsed = tokenizedParser(input);
-    return parsed === null ? null : {
-      ...parsed,
-      result: parsed.result.filter((_, i) => i % 2 === 1),
-    };
-  };
-};
+// function seq() {
+//   const whitespace = regex(/\s*/);
+//   const parsers = [...arguments];
+//   const spaces = Array(parsers.length).fill(whitespace);
+//   const tokenizedParsers = zip(spaces, parsers).flat();
+//   return (input) => {
+//     // console.log("xcxc seq: ", input.slice(0,LOG_HEAD));
+//     const tokenizedParser = seqUntokenized(...tokenizedParsers);
+//     const parsed = tokenizedParser(input);
+//     return parsed === null ? null : {
+//       ...parsed,
+//       result: parsed.result.filter((_, i) => i % 2 === 1),
+//     };
+//   };
+// };
 
 function or() {
   const parsers = [...arguments];
@@ -110,7 +111,8 @@ function or() {
 
 function many(parser) {
   function recur(input, partial) {
-    const res = parser(input);
+    // xcxc note the trim
+    const res = parser(input.trim());
     if (res) return recur(res.rest, partial.concat([res.result]));
     return { result: partial, rest: input };
   }
@@ -212,6 +214,8 @@ g.special = lazyN("special", () =>
     seq(lit('match'), g.expr, many(g.branch)),
     seq(lit('and'), many(g.expr)),
     seq(lit('or'), many(g.expr)),
+    seq(lit('list'), many(g.expr)),
+    seq(lit('map'), many(g.expr)),
     seq(lit('js'), g.string, many(g.expr)),
     seq(lit('js/import'), g.string),
     seq(lit('js/method'), g.expr, g.string, many(g.expr)),
@@ -259,7 +263,7 @@ g.identifier = barring(
   reserved
 );
 
-g.integer = regex(/-? [0-9]+/);
+g.integer = regex(/-?[0-9]+/);
 g['float'] = regex(/-?[0-9]+.[0-9]+/);
 g.string = regex(/"(\\[\\\"ntr]|[^"\\])*"/);
 g.comment = regex(/;[^\n]*\n/);

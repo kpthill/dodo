@@ -1,5 +1,1 @@
-(list
-  (map "name" "Alice" "age" 30)
-  (map "name" "Bob" "age" 17)
-  (map "name" "Charlie" "age" 25)
-  (map "name" "Diana" "age" 15))
+(list 1 2 3 4)
