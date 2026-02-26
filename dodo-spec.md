@@ -1,6 +1,6 @@
 # Dodo Language Specification
 
-**Version:** 0.1.2 (Draft)
+**Version:** 0.1.3 (Draft)
 
 Dodo is a small, purely functional, expression-based programming language
 with Lisp-style syntax. It is designed to be implementable in a weekend as a
@@ -638,6 +638,8 @@ project. Errors simply crash with a stack trace.
 ```
 program     = expr* ;
 
+comment     = ';' [^\n]* ;
+
 expr        = literal
             | identifier
             | '(' special ')'
@@ -651,6 +653,8 @@ special     = 'def' identifier expr
             | 'match' expr branch+
             | 'and' expr+
             | 'or' expr+
+            | 'list' expr*
+            | 'map' expr*
             | 'js' string expr*
             | 'js/import' string
             | 'js/method' expr string expr*
