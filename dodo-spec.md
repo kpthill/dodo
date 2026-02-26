@@ -1,6 +1,6 @@
 # Dodo Language Specification
 
-**Version:** 0.1.3 (Draft)
+**Version:** 0.2.0 (Draft)
 
 Dodo is a small, purely functional, expression-based programming language
 with Lisp-style syntax. It is designed to be implementable in a weekend as a
@@ -31,8 +31,8 @@ Dodo is dynamically typed. Values carry their type at runtime.
 | `float`  | `3.14`, `-0.5`, `1.0`          | Must contain a `.`                       |
 | `bool`   | `true`, `false`                |                                          |
 | `string` | `"hello"`, `"it's \"fine\""`   | Double-quoted, backslash escapes         |
-| `list`   | `(list 1 2 3)`                 | Heterogeneous, immutable                 |
-| `map`    | `(map "a" 1 "b" 2)`            | Key-value pairs, keys can be any type    |
+| `list`   | `[1 2 3]`                      | Heterogeneous, immutable                 |
+| `map`    | `{"a": 1, "b": 2}`             | Key-value pairs, keys can be any type    |
 | `nil`    | `nil`                          | The unit/nothing value                   |
 | `fn`     | `(fn (x) (+ x 1))`             | First-class functions (closures)         |
 
@@ -102,18 +102,18 @@ literal expressions that evaluate to themselves.
 A bare identifier evaluates to the value bound to it in the current
 environment. It is a runtime error to reference an unbound identifier.
 
-### 4.3 List and Map Constructors
+### 4.3 List and Map Literals
 
 ```
-(list 1 2 3)            ; => [1, 2, 3]
-(list)                   ; => []
+[1 2 3]                 ; => [1, 2, 3]
+[]                      ; => []
 
-(map "x" 10 "y" 20)     ; => {"x": 10, "y": 20}
-(map)                    ; => {}
+{"x": 10, "y": 20}      ; => {"x": 10, "y": 20}
+{}                      ; => {}
 ```
 
-All arguments to `list` and `map` are evaluated. `map` takes an even number
-of arguments as alternating key-value pairs.
+All elements are evaluated. Map literals take alternating key-value pairs
+separated by `:`. Commas are optional (treated as whitespace).
 
 ### 4.4 Function Calls
 
@@ -270,20 +270,20 @@ appear as a constructor pattern. Matches any value and binds it to the name.
 #### List Destructuring
 
 ```
-((list) body)                     ; matches empty list
-((list a b c) body)               ; matches 3-element list, binds elements
-((list a b . rest) body)          ; matches 2+ elements; rest is the remaining list
-((list 1 _ c) body)               ; patterns can be nested/mixed
+([] body)                         ; matches empty list
+([a b c] body)                    ; matches 3-element list, binds elements
+([a b . rest] body)               ; matches 2+ elements; rest is the remaining list
+([1 _ c] body)                    ; patterns can be nested/mixed
 ```
 
-The `(list ...)` pattern mirrors the constructor. The `.` (rest) operator
+The `[...]` pattern mirrors the literal syntax. The `.` (rest) operator
 captures the tail as a list.
 
 #### Map Destructuring
 
 ```
-((map "x" vx "y" vy) body)       ; matches map with at least keys "x" and "y"
-((map "name" name . rest) body)   ; binds matching key and rest of map
+({"x": vx, "y": vy} body)        ; matches map with at least keys "x" and "y"
+({"name": name . rest} body)      ; binds matching key and rest of map
 ```
 
 Map patterns match if the map contains *at least* the specified keys.
@@ -295,10 +295,10 @@ Patterns can be arbitrarily nested:
 
 ```
 (match point
-  ((list (list 0 0)) "origin")
-  ((list (list x 0)) "on x-axis")
-  ((list (list 0 y)) "on y-axis")
-  ((list (list x y)) (format "({}, {})" x y)))
+  ([[0 0]] "origin")
+  ([[x 0]] "on x-axis")
+  ([[0 y]] "on y-axis")
+  ([[x y]] (format "({}, {})" x y)))
 ```
 
 #### Guard Clauses
@@ -371,7 +371,7 @@ numbers and strings (lexicographic).
 | `str-slice`     | `(str-slice "hello" 1 3)` → `"el"`         | Start (inclusive), end (exclusive) |
 | `str-index`     | `(str-index "hello" "ll")` → `2`           | Returns -1 if not found        |
 | `str-split`     | `(str-split "a,b,c" ",")` → `["a","b","c"]`| Returns a list                 |
-| `str-join`      | `(str-join (list "a" "b") ",")` → `"a,b"`  |                                |
+| `str-join`      | `(str-join ["a" "b"] ",")` → `"a,b"`       |                                |
 | `str-upper`     | `(str-upper "hi")` → `"HI"`                |                                |
 | `str-lower`     | `(str-lower "HI")` → `"hi"`                |                                |
 | `str-trim`      | `(str-trim "  hi  ")` → `"hi"`             |                                |
@@ -383,23 +383,23 @@ numbers and strings (lexicographic).
 
 | Function  | Example                                          | Notes                          |
 |-----------|--------------------------------------------------|--------------------------------|
-| `head`    | `(head (list 1 2 3))` → `1`                     | Error on empty list            |
-| `tail`    | `(tail (list 1 2 3))` → `[2, 3]`                | Error on empty list            |
-| `cons`    | `(cons 0 (list 1 2))` → `[0, 1, 2]`             | Prepend                        |
-| `concat`  | `(concat (list 1 2) (list 3 4))` → `[1,2,3,4]`  | List concatenation             |
-| `len`     | `(len (list 1 2 3))` → `3`                       | Also works on strings and maps |
-| `nth`     | `(nth (list 10 20 30) 1)` → `20`                 | Zero-indexed                   |
-| `empty?`  | `(empty? (list))` → `true`                       | Also works on strings and maps |
-| `map`     | `(map (fn (x) (* x 2)) (list 1 2 3))` → `[2,4,6]` | Returns new list            |
-| `filter`  | `(filter (fn (x) (> x 2)) (list 1 2 3 4))` → `[3,4]` |                           |
-| `fold`    | `(fold (fn (acc x) (+ acc x)) 0 (list 1 2 3))` → `6` | Left fold                 |
-| `flat-map`| `(flat-map (fn (x) (list x x)) (list 1 2))` → `[1,1,2,2]` |                      |
+| `head`    | `(head [1 2 3])` → `1`                          | Error on empty list            |
+| `tail`    | `(tail [1 2 3])` → `[2, 3]`                     | Error on empty list            |
+| `cons`    | `(cons 0 [1 2])` → `[0, 1, 2]`                  | Prepend                        |
+| `concat`  | `(concat [1 2] [3 4])` → `[1,2,3,4]`            | List concatenation             |
+| `len`     | `(len [1 2 3])` → `3`                            | Also works on strings and maps |
+| `nth`     | `(nth [10 20 30] 1)` → `20`                      | Zero-indexed                   |
+| `empty?`  | `(empty? [])` → `true`                           | Also works on strings and maps |
+| `map`     | `(map (fn (x) (* x 2)) [1 2 3])` → `[2,4,6]`   | Returns new list               |
+| `filter`  | `(filter (fn (x) (> x 2)) [1 2 3 4])` → `[3,4]` |                               |
+| `fold`    | `(fold (fn (acc x) (+ acc x)) 0 [1 2 3])` → `6` | Left fold                     |
+| `flat-map`| `(flat-map (fn (x) [x x]) [1 2])` → `[1,1,2,2]` |                               |
 | `range`   | `(range 0 5)` → `[0, 1, 2, 3, 4]`               | Start (inclusive), end (exclusive) |
-| `reverse` | `(reverse (list 1 2 3))` → `[3, 2, 1]`          |                                |
-| `sort`    | `(sort (list 3 1 2))` → `[1, 2, 3]`              | Natural ordering               |
+| `reverse` | `(reverse [1 2 3])` → `[3, 2, 1]`               |                                |
+| `sort`    | `(sort [3 1 2])` → `[1, 2, 3]`                  | Natural ordering               |
 | `sort-by` | `(sort-by (fn (x) (nth x 1)) data)` | Sort by key function |
-| `zip`     | `(zip (list 1 2) (list "a" "b"))` → `[[1,"a"],[2,"b"]]` |                       |
-| `enumerate`| `(enumerate (list "a" "b"))` → `[[0,"a"],[1,"b"]]` |                             |
+| `zip`     | `(zip [1 2] ["a" "b"])` → `[[1,"a"],[2,"b"]]`   |                                |
+| `enumerate`| `(enumerate ["a" "b"])` → `[[0,"a"],[1,"b"]]`  |                                |
 
 ### 6.6 Map Operations
 
@@ -424,8 +424,8 @@ numbers and strings (lexicographic).
 | `float?`       | `(float? 3.14)` → `true`      |                                    |
 | `string?`      | `(string? "hi")` → `true`     |                                    |
 | `bool?`        | `(bool? true)` → `true`       |                                    |
-| `list?`        | `(list? (list 1))` → `true`   |                                    |
-| `map?`         | `(map? (map))` → `true`       |                                    |
+| `list?`        | `(list? [1])` → `true`        |                                    |
+| `map?`         | `(map? {})` → `true`          |                                    |
 | `nil?`         | `(nil? nil)` → `true`         |                                    |
 | `fn?`          | `(fn? +)` → `true`            |                                    |
 | `int->float`   | `(int->float 3)` → `3.0`      |                                    |
@@ -457,7 +457,7 @@ only mechanism for side effects.
 ```
 (js "Math.sqrt" 144)             ; => 12.0
 (js "console.log" "hello")      ; => nil (side effect: prints)
-(js "JSON.stringify" (map "a" 1)); => "{\"a\":1}"
+(js "JSON.stringify" {"a": 1})   ; => "{\"a\":1}"
 ```
 
 Syntax: `(js <string-path> arg1 arg2 ...)`
@@ -596,11 +596,10 @@ project. Errors simply crash with a stack trace.
 ; A tiny program that processes a list of people
 
 (def people
-  (list
-    (map "name" "Alice" "age" 30)
-    (map "name" "Bob" "age" 17)
-    (map "name" "Charlie" "age" 25)
-    (map "name" "Diana" "age" 15)))
+  [{"name": "Alice", "age": 30}
+   {"name": "Bob",   "age": 17}
+   {"name": "Charlie", "age": 25}
+   {"name": "Diana", "age": 15}])
 
 ; Filter adults (no if — use match!)
 (defn adult? (person)
@@ -619,8 +618,8 @@ project. Errors simply crash with a stack trace.
 ; Print each greeting
 (defn print-all (items)
   (match items
-    ((list) nil)
-    ((list first . rest)
+    ([] nil)
+    ([first . rest]
       (do
         (println first)
         (print-all rest)))))
@@ -642,8 +641,12 @@ comment     = ';' [^\n]* ;
 
 expr        = literal
             | identifier
+            | '[' expr* ']'
+            | '{' map-pair* '}'
             | '(' special ')'
             | '(' expr expr* ')' ;
+
+map-pair    = expr ':' expr ;
 
 special     = 'def' identifier expr
             | 'defn' identifier '(' identifier* ')' expr
@@ -653,8 +656,6 @@ special     = 'def' identifier expr
             | 'match' expr branch+
             | 'and' expr+
             | 'or' expr+
-            | 'list' expr*
-            | 'map' expr*
             | 'js' string expr*
             | 'js/import' string
             | 'js/method' expr string expr*
@@ -667,19 +668,19 @@ branch      = '(' pattern ('when' expr)? expr ')' ;
 pattern     = '_'
             | literal
             | identifier
-            | '(' 'list' list-pat* ('.' identifier)? ')'
-            | '(' 'map' map-entry* ('.' identifier)? ')' ;
+            | '[' list-pat* ('.' identifier)? ']'
+            | '{' map-pat-entry* ('.' identifier)? '}' ;
 
 list-pat    = pattern ;
 
-map-entry   = expr pattern ;
+map-pat-entry = expr ':' pattern ;
 
 literal     = integer | float | string | 'true' | 'false' | 'nil' ;
 
 identifier  = [a-zA-Z_?!][a-zA-Z0-9_?!>*-]* ;
               (* except reserved words: def, defn, fn, do, let,
                  match, and, or, js, js/import, js/method, js/get,
-                 true, false, nil, when, list, map *)
+                 true, false, nil, when *)
 
 integer     = '-'? [0-9]+ ;
 float       = '-'? [0-9]+ '.' [0-9]+ ;
@@ -761,7 +762,6 @@ and loop at the top level until you get a non-thunk value.
 def  defn  fn  do  let  match  when  and  or
 js  js/import  js/method  js/get
 true  false  nil
-list  map
 ```
 
 ## Appendix B: Operator Precedence
