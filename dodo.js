@@ -18,15 +18,19 @@ const LOG_HEAD = 10;
 //   - or([a, b, c]): returns the result of the first of a, b, c that is non-null
 //   - many(parser):
 
-// commas are treated as whitespace in dodo, so we need a custom expression of this
+// commas are treated as whitespace in dodo, so we need a custom expression of trim. this also
+// strips comments
 function trimWS(s) {
-  return s.replace(/^(\s,)*/, '');
+  const trimmed = s.replace(/^[\s,]*/, '');
+  if (trimmed.match(/^;/)) {
+    return trimWS(trimmed.replace(/^;[^\r\n]*[\n\r]/,''));
+  }
+  return trimmed;
 }
 
 function lit(str) {
   const len = str.length;
   return (input) => {
-    // console.log("xcxc lit: ", input.slice(0,LOG_HEAD));
     return (
       input.slice(0, len) === str
         ? {
@@ -37,13 +41,29 @@ function lit(str) {
   }
 }
 
+// like lit(), but requires that it not be extensible to an identifier
+function tok(str) {
+  const len = str.length;
+  return input => {
+    const head = input.slice(0, len);
+    const rest = input.slice(len);
+    if (head === str && !rest.match(/^[a-zA-Z0-9_?!>*\-+/%<=]/)) {
+      return {
+        result: str,
+        rest,
+      };
+    }
+    return null;
+  }
+}
+
 function regex(re) {
   // Make sure we only match the beginning of the input
   const fixed = re.source.match(/^\^/)
         ? re
         : new RegExp('^' + re.source);
   return (input) => {
-    // console.log("xcxc regex: ", input.slice(0,LOG_HEAD));
+    // console.log('xcxc regex: ', input.slice(0,LOG_HEAD));
 
     const match = fixed.exec(input);
     if (!match) return null;
@@ -61,7 +81,7 @@ function seq() {
     return parsers.reduce((current, parser) => {
       if (!current) return null;
 
-      const res = parser(trimWS(current.rest.trim));
+      const res = parser(trimWS(current.rest));
       if (!res) return null;
 
       return {
@@ -88,7 +108,7 @@ function zip(...arrays) {
 //   const spaces = Array(parsers.length).fill(whitespace);
 //   const tokenizedParsers = zip(spaces, parsers).flat();
 //   return (input) => {
-//     // console.log("xcxc seq: ", input.slice(0,LOG_HEAD));
+//     // console.log('xcxc seq: ', input.slice(0,LOG_HEAD));
 //     const tokenizedParser = seqUntokenized(...tokenizedParsers);
 //     const parsed = tokenizedParser(input);
 //     return parsed === null ? null : {
@@ -101,7 +121,7 @@ function zip(...arrays) {
 function or() {
   const parsers = [...arguments];
   return (input) => {
-    // console.log("xcxc or: ", input.slice(0,LOG_HEAD));
+    // console.log('xcxc or: ', input.slice(0,LOG_HEAD));
 
     for (var i = 0; i < parsers.length; i++) {
       const res = parsers[i](input);
@@ -121,7 +141,7 @@ function many(parser) {
   }
 
   return (input) => {
-    // console.log("xcxc many: ", input.slice(0,LOG_HEAD));
+    // console.log('xcxc many: ', input.slice(0,LOG_HEAD));
     return recur(input, []);
   };
 }
@@ -168,15 +188,15 @@ const opt = (parser) => or(
 // DODO GRAMMAR
 
 // We put all our grammar definitions into an object so that lookups happen at runtime - this allows
-// grammar element to reference each other or themselves. The lazy operator allows us to reference
-// things that haven't been put in the grammar yet.
+// grammar element to reference each other or themselves. To reference things that haven't been
+// added to the grammar yet, the rule function accepts a thunk and doesn't evaluate it until
+// runtime. It also provides some utilities for debugging and will in the future give hooks for
+// processing the nodes as they're parsed.
 const g = {};
-const lazy = (f) => ((input) => f(input));
-
-const lazyN = (name, f) => ((input) => {
-  console.log("xcxc " + name + " lazy input = ", input.slice(0,LOG_HEAD));
+const rule = (name, f) => ((input) => {
+  console.log('xcxc ' + name + ' input = ', input.slice(0,LOG_HEAD));
   const parser = f();
-  return parser(input);
+  return parser(trimWS(input));
 });
 
 const barring = (parser, barred) => {
@@ -194,103 +214,95 @@ const reserved = [
   'when', 'list', 'map'
 ];
 
-g.program = lazyN("program", () =>
+g.program = rule('program', () =>
   many(g.expr)
 );
 
-g.expr = lazyN("expr", () =>
+g.expr = rule('expr', () =>
   or(
     g.literal,
     g.identifier,
     seq(lit('('), g.special, lit(')')),
-    seq(lit('('), oneOrMore(g.expr), lit(')'))
+    seq(lit('('), oneOrMore(g.expr), lit(')')),
+    seq(lit('['), many(g.expr), lit(']')),
+    seq(lit('{'), many(g.mapPair), lit('}')),
   )
 );
 
-g.special = lazyN("special", () =>
+g.mapPair = rule('mapPair', () =>
+  seq(g.expr, lit(':'), g.expr)
+);
+
+g.special = rule('special', () =>
   or(
-    seq(lit('def'), g.identifier, g.expr),
-    seq(lit('defn'), g.identifier, lit('('), many(g.identifier), lit(')'), g.expr),
-    seq(lit('fn'), lit('('), many(g.identifier), lit(')'), g.expr),
-    seq(lit('do'), oneOrMore(g.expr)),
-    seq(lit('let'), lit('('), many(g.binding), lit(')'), g.expr),
-    seq(lit('match'), g.expr, many(g.branch)),
-    seq(lit('and'), many(g.expr)),
-    seq(lit('or'), many(g.expr)),
-    seq(lit('list'), many(g.expr)),
-    seq(lit('map'), many(g.expr)),
-    seq(lit('js'), g.string, many(g.expr)),
-    seq(lit('js/import'), g.string),
-    seq(lit('js/method'), g.expr, g.string, many(g.expr)),
-    seq(lit('js/get'), g.expr, g.string),
+    // note ordering - defn has to go before def because it's an extension of it
+    seq(tok('defn'), g.identifier, lit('('), many(g.identifier), lit(')'), g.expr),
+    seq(tok('def'), g.identifier, g.expr),
+    seq(tok('fn'), lit('('), many(g.identifier), lit(')'), g.expr),
+    seq(tok('do'), oneOrMore(g.expr)),
+    seq(tok('let'), lit('('), many(g.binding), lit(')'), g.expr),
+    seq(tok('match'), g.expr, many(g.branch)),
+    seq(tok('and'), many(g.expr)),
+    seq(tok('or'), many(g.expr)),
+    seq(tok('list'), many(g.expr)),
+    seq(tok('map'), many(g.expr)),
+    seq(tok('js/import'), g.string),
+    seq(tok('js/method'), g.expr, g.string, many(g.expr)),
+    seq(tok('js/get'), g.expr, g.string),
+    seq(tok('js'), g.string, many(g.expr)),
   )
 );
 
-g.binding = lazyN("binding", () =>
+g.binding = rule('binding', () =>
   seq(lit('('), g.identifier, g.expr, lit(')')),
 );
 
-g.branch = lazyN("branch", () =>
-  seq(lit('('), g.pattern, opt(seq(lit('when'), g.expr)), g.expr, lit(')'))
+g.branch = rule('branch', () =>
+  seq(lit('('), g.pattern, opt(seq(tok('when'), g.expr)), g.expr, lit(')'))
 );
 
-g.pattern = lazyN("pattern", () =>
+g.pattern = rule('pattern', () =>
   or(
-    lit('_'),
+    tok('_'),
     g.literal,
     g.identifier,
-    seq(lit('('), lit('list'), many(g.listPat), opt(seq(lit('.'), g.identifier)), lit(')')),
-    seq(lit('('), lit('map'), many(g.mapEntry), opt(seq(lit('.'), g.identifier)), lit(')')),
+    seq(lit('['), many(g.listPat), opt(seq(lit('.'), g.identifier)), lit(']')),
+    seq(lit('{'), many(g.mapEntry), opt(seq(lit('.'), g.identifier)), lit('}')),
   )
 );
 
-g.listPat = lazy("listPat", () => g.pattern);
+g.listPat = rule('listPat', () => g.pattern);
 
-g.mapEntry = lazyN("mapEntry", () =>
-  seq(g.expr, g.pattern)
+g.mapEntry = rule('mapEntry', () =>
+  seq(g.expr, lit(':'), g.pattern)
 );
 
-g.literal = lazyN("literal", () =>
+g.literal = rule('literal', () =>
   or(
     g.integer,
     g.float,
     g.string,
-    lit('true'),
-    lit('false'),
-    lit('nil')
+    tok('true'),
+    tok('false'),
+    tok('nil')
   )
 );
 
-g.identifier = barring(
-  regex(/[a-zA-Z_?!][a-zA-Z0-9_?!>*-]*/),
-  reserved
+g.identifier = rule('identifier', () =>
+  barring(
+    or(
+      regex(/[a-zA-Z_?!][a-zA-Z0-9_?!>*-]*/),
+      regex(/[+\-*/%<>=]+/),
+    ),
+    reserved
+  )
 );
 
-g.integer = regex(/-?[0-9]+/);
-g['float'] = regex(/-?[0-9]+.[0-9]+/);
-g.string = regex(/"(\\[\\\"ntr]|[^"\\])*"/);
-g.comment = regex(/;[^\n]*\n/);
+g.integer = rule('integer', () => regex(/-?[0-9]+/));
+g['float'] = rule('float', () => regex(/-?[0-9]+.[0-9]+/));
+g.string = rule('string', () => regex(/"(\\[\\\"ntr]|[^"\\])*"/));
+g.comment = rule('comment', () => regex(/;[^\n]*\n/));
 
 const program = g.program;
 res = program(input);
 console.log(JSON.stringify(program(input)));
-
-// const t = {};
-
-// t.start = lazy(() =>
-//   many(t.expr)
-// );
-
-// t.expr = lazy(() =>
-//   or(
-//     fail,
-//     t.letter
-//   )
-// );
-
-// t.letter = lazy(() =>
-//   regex(/[^;]/)
-// );
-
-// const res = t.start(input);
-// console.log(res);

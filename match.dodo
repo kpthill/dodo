@@ -1,0 +1,1 @@
+(defn adult? (person) (match (>= (get person "age") 18) (true true) (false false)))

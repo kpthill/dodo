@@ -1,27 +1,36 @@
-(def people
-  (list
-    (map "name" "Alice" "age" 30)
-    (map "name" "Bob" "age" 17)
-    (map "name" "Charlie" "age" 25)
-    (map "name" "Diana" "age" 15)))
 
+; A tiny program that processes a list of people
+
+(def people
+  [{"name": "Alice", "age": 30}
+   {"name": "Bob",   "age": 17}
+   {"name": "Charlie", "age": 25}
+   {"name": "Diana", "age": 15}])
+
+; Filter adults (no if — use match!)
 (defn adult? (person)
   (match (>= (get person "age") 18)
     (true true)
     (false false)))
 
+; Format a greeting
 (defn greet (person)
   (str "Hello, " (get person "name") "!"))
 
+; Process
 (def adults (filter adult? people))
 (def greetings (map greet adults))
 
+; Print each greeting
 (defn print-all (items)
   (match items
-    ((list) nil)
-    ((list first . rest)
+    ([] nil)
+    ([first . rest]
       (do
         (println first)
         (print-all rest)))))
 
 (print-all greetings)
+; Output:
+; Hello, Alice!
+; Hello, Charlie!
