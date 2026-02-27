@@ -68,7 +68,11 @@ g.map = rule('map', () =>
 );
 
 g.mapPair = rule('mapPair', () =>
-  seq(g.expr, lit(':'), g.expr)
+  seq(g.expr, lit(':'), g.expr),
+  ([key, colon, value]) => ({
+    type: 'mapPair',
+    key, value
+  }),
 );
 
 g.special = rule('special', () =>
@@ -284,8 +288,8 @@ g.identifier = rule('identifier', () =>
 );
 
 g.number = rule('number', () =>
-  regex(/-?[0-9]+(.[0-9]+)?/),
-  numStr => ({ type: 'number', value: Number(numStr) })
+  regex(/-?[0-9]+(\.[0-9]+)?/),
+  numStr => ({ type: 'number', value: Number(numStr) }),
 );
 g.string = rule('string', () =>
   regex(/"(\\[\\\"ntr]|[^"\\])*"/),

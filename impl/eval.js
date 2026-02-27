@@ -11,9 +11,9 @@ const getEnvValue = (name, env) => {
 }
 
 export const evalDodo = (node, env=[{}]) => {
-  const fn = evaluators[node.nType];
+  const fn = evaluators[node.type];
   if (!fn) {
-    throw new Error("NOT IMPLEMENTED: " + node.nType);
+    throw new Error("NOT IMPLEMENTED: " + node.type);
   };
   return fn(node, env);
 };
@@ -42,3 +42,21 @@ evaluators.def = (node, env) => {
   env.at(-1)[node.name] = evalDodo(node.value, env);
   return null;
 };
+
+evaluators.list = (node, env) => {
+  return node.exprs.map(expr => evalDodo(expr, env));
+};
+
+evaluators.map = (node, env) => {
+  const res = {};
+  node.entries.forEach(entry => {
+    const { key, value } = entry;
+    const resKey = evalDodo(key, env);
+    const resValue = evalDodo(value, env);
+    res[resKey] = resValue;
+  });
+  return res;
+};
+
+evaluators.string = (node, env) => node.value;
+evaluators.number = (node, env) => node.value;
