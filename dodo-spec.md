@@ -1,6 +1,6 @@
 # Dodo Language Specification
 
-**Version:** 0.2.3 (Draft)
+**Version:** 0.3.0 (Draft)
 
 Dodo is a small, purely functional, expression-based programming language
 with Lisp-style syntax. It is designed to be implementable in a weekend as a

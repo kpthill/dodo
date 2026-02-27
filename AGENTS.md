@@ -30,7 +30,7 @@ The spec version follows a `major.minor.intrasession` scheme:
   should ask first. Since this is a learning project not intended for
   release, major bumps are unlikely.
 
-Current spec version: `0.2.3`
+Current spec version: `0.3.0`
 
 ## Formatting
 
