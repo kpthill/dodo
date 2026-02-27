@@ -744,72 +744,7 @@ comment     = ';' [^\n]* ;
 
 ---
 
-## 13. Implementation Notes
-
-This section is non-normative — suggestions for the JS interpreter.
-
-### 13.1 Architecture
-
-A tree-walking interpreter with three phases:
-
-1. **Tokenizer** — Split input into tokens (parens, strings, numbers,
-   identifiers).
-2. **Parser** — Build an AST from the token stream. Since the syntax is
-   S-expressions, this is essentially just matching balanced parens and
-   classifying the head of each list.
-3. **Evaluator** — Recursively walk the AST, maintaining an environment
-   (scope chain) as a linked list of Maps.
-
-### 13.2 Environment
-
-```javascript
-class Env {
-  constructor(parent = null) {
-    this.bindings = new Map();
-    this.parent = parent;
-  }
-  get(name) {
-    if (this.bindings.has(name)) return this.bindings.get(name);
-    if (this.parent) return this.parent.get(name);
-    throw new Error(`Unbound identifier: ${name}`);
-  }
-  set(name, value) {
-    this.bindings.set(name, value);
-  }
-}
-```
-
-### 13.3 Match Implementation
-
-Pattern matching can be implemented as a recursive
-`matchPattern(pattern, value)` function that returns either `null` (no
-match) or a `Map<string, value>` of bindings. The evaluator tries each
-branch and uses the first successful match.
-
-### 13.4 FFI Implementation
-
-The `js` form can use JavaScript's bracket notation for path traversal:
-
-```javascript
-function resolveJsPath(path) {
-  return path.split('.').reduce((obj, key) => obj[key], globalThis);
-}
-```
-
-### 13.5 Tail Call Optimization (Stretch Goal)
-
-If you want to support deep recursion without stack overflow, implement TCO
-for:
-- The last expression in a `do` block
-- The body of a matched `match` branch
-- The body of a `fn`
-
-This can be done with a trampoline: instead of recursing, return a thunk,
-and loop at the top level until you get a non-thunk value.
-
----
-
-## Appendix A: Reserved Words
+## 13. Appendix A: Reserved Words
 
 ```
 def  defn  fn  do  let  match  when  and  or
@@ -817,7 +752,7 @@ js  js/import  js/method  js/get
 true  false  nil
 ```
 
-## Appendix B: Operator Precedence
+## 14. Appendix B: Operator Precedence
 
 Not applicable — Dodo has no infix operators. All operations use prefix
 notation with explicit parentheses.
