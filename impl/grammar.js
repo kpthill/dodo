@@ -27,7 +27,7 @@ const reserved = [
 g.program = rule('program', () =>
   many(g.expr),
   exprs => ({
-    nType: 'program',
+    type: 'program',
     exprs,
   }),
 );
@@ -46,7 +46,7 @@ g.expr = rule('expr', () =>
 g.fnCall = rule('fnCall', () =>
   seq(lit('('), oneOrMore(g.expr), lit(')')),
   ([open, [fn, ...args], close]) => ({
-    nType: 'fnCall',
+    type: 'fnCall',
     fn, args
   }),
 );
@@ -54,7 +54,7 @@ g.fnCall = rule('fnCall', () =>
 g.list = rule('list', () =>
   seq(lit('['), many(g.expr), lit(']')),
   ([open, exprs, close]) => ({
-    nType: 'list',
+    type: 'list',
     exprs
   }),
 );
@@ -62,7 +62,7 @@ g.list = rule('list', () =>
 g.map = rule('map', () =>
   seq(lit('{'), many(g.mapPair), lit('}')),
   ([open, entries, close]) => ({
-    nType: 'map',
+    type: 'map',
     entries,
   }),
 );
@@ -95,7 +95,7 @@ g.special = rule('special', () =>
 g.def = rule('def', () =>
   seq(tok('def'), g.identifier, g.expr),
   ([def, name, value]) => ({
-    nType: 'def',
+    type: 'def',
     name, value,
   }),
 );
@@ -103,7 +103,7 @@ g.def = rule('def', () =>
 g.defn = rule('defn', () =>
   seq(tok('defn'), g.identifier, lit('('), many(g.identifier), lit(')'), g.expr),
   ([defn, name, open, args, close, body]) => ({
-    nType: 'defn',
+    type: 'defn',
     name, args, body,
   }),
 );
@@ -111,7 +111,7 @@ g.defn = rule('defn', () =>
 g.fn = rule('fn', () =>
   seq(tok('fn'), lit('('), many(g.identifier), lit(')'), g.expr),
   ([fn, open, args, body]) => ({
-    nType: 'fn',
+    type: 'fn',
     args, body,
   }),
 );
@@ -119,7 +119,7 @@ g.fn = rule('fn', () =>
 g['do'] = rule('do', () =>
   seq(tok('do'), oneOrMore(g.expr)),
   ([doTag, exprs]) => ({
-    nType: 'do',
+    type: 'do',
     exprs
   }),
 );
@@ -127,7 +127,7 @@ g['do'] = rule('do', () =>
 g['let'] = rule('let', () =>
   seq(tok('let'), lit('('), many(g.binding), lit(')'), g.expr),
   ([letTag, open, bindings, close, expr]) => ({
-    nType: 'let',
+    type: 'let',
     bindings, expr
   }),
 );
@@ -135,7 +135,7 @@ g['let'] = rule('let', () =>
 g.match = rule('match', () =>
   seq(tok('match'), g.expr, many(g.branch)),
   ([match, expr, branches]) => ({
-    nType: 'match',
+    type: 'match',
     expr, branches
   }),
 );
@@ -143,7 +143,7 @@ g.match = rule('match', () =>
 g.and = rule('and', () =>
   seq(tok('and'), many(g.expr)),
   ([and, exprs]) => ({
-    nType: 'and',
+    type: 'and',
     exprs
   }),
 );
@@ -151,7 +151,7 @@ g.and = rule('and', () =>
 g.or = rule('or', () =>
   seq(tok('or'), many(g.expr)),
   ([or, exprs]) => ({
-    nType: 'or',
+    type: 'or',
     exprs
   }),
 );
@@ -159,7 +159,7 @@ g.or = rule('or', () =>
 g.jsImport = rule('jsImport', () =>
   seq(tok('js/import'), g.string),
   ([tag, module]) => ({
-    nType: 'jsImport',
+    type: 'jsImport',
     module
   }),
 );
@@ -167,7 +167,7 @@ g.jsImport = rule('jsImport', () =>
 g.jsMethod = rule('jsMethod', () =>
   seq(tok('js/method'), g.expr, g.string, many(g.expr)),
   ([tag, object, methodName, args]) => ({
-    nType: 'jsMethod',
+    type: 'jsMethod',
     object, methodName, args
   }),
 );
@@ -175,7 +175,7 @@ g.jsMethod = rule('jsMethod', () =>
 g.jsGet = rule('jsGet', () =>
   seq(tok('js/get'), g.expr, g.string),
   ([tag, object, key]) => ({
-    nType: 'jsMethod',
+    type: 'jsMethod',
     object, key
   }),
 );
@@ -183,7 +183,7 @@ g.jsGet = rule('jsGet', () =>
 g.js = rule('js', () =>
   seq(tok('js'), g.string, many(g.expr)),
   ([tag, functionName, args]) => ({
-    nType: 'js',
+    type: 'js',
     object, functionName, args
   }),
 );
@@ -191,7 +191,7 @@ g.js = rule('js', () =>
 g.binding = rule('binding', () =>
   seq(lit('('), g.identifier, g.expr, lit(')')),
   ([open, id, value, close]) => ({
-    nType: 'binding',
+    type: 'binding',
     id, value
   }),
 );
@@ -200,7 +200,7 @@ g.branch = rule('branch', () =>
   seq(lit('('), g.pattern, opt(seq(tok('when'), g.expr)), g.expr, lit(')')),
   ([open, pattern, maybeWhen, expr, close]) => {
     const basic = {
-      nType: 'branch',
+      type: 'branch',
       pattern, expr,
     };
     if (emptyOpt(maybeWhen)) return basic;
@@ -225,30 +225,30 @@ g.pattern = rule('pattern', () =>
 
 g.patternDefault = rule("patternDefault", () =>
   tok('_'),
-  () => ({ nType: "patternDefault" })
+  () => ({ type: "patternDefault" })
 );
 
 g.listPat = rule('listPat', () =>
   seq(lit('['), many(g.pattern), opt(seq(lit('.'), g.identifier)), lit(']')),
   ([_1, patterns, id_pattern, _2]) => {
-    if (emptyOpt(id_pattern)) return { nType: 'listPat', patterns };
+    if (emptyOpt(id_pattern)) return { type: 'listPat', patterns };
     const [_, id] = id_pattern;
-    return { nType: 'listPat', patterns, identifier: id };
+    return { type: 'listPat', patterns, identifier: id };
   }
 );
 
 g.mapPat = rule('mapPat', () =>
   seq(lit('{'), many(g.mapEntry), opt(seq(lit('.'), g.identifier)), lit('}')),
   ([open, entries, id_pattern, close]) => {
-    if (emptyOpt(id_pattern)) return { nType: 'mapPat', entries };
+    if (emptyOpt(id_pattern)) return { type: 'mapPat', entries };
     const [_, id] = id_pattern;
-    return { nType: 'mapPat', entries, identifier: id };
+    return { type: 'mapPat', entries, identifier: id };
   },
 );
 
 g.mapEntry = rule('mapEntry', () =>
   seq(g.expr, lit(':'), g.pattern),
-  ([expr, colon, pattern]) => ({nType: 'mapEntry', key: expr, value: pattern}),
+  ([expr, colon, pattern]) => ({type: 'mapEntry', key: expr, value: pattern}),
 );
 
 g.literal = rule('literal', () =>
@@ -260,11 +260,11 @@ g.literal = rule('literal', () =>
     g.string,
   ),
   res => {
-    if (nTypeof res === 'string') {
+    if (typeof res === 'string') {
       switch (res) {
-      case 'true': return { nType: 'bool', val: true };
-      case 'false': return { nType: 'bool', val: false };
-      case 'nil': return { nType: 'nil' };
+      case 'true': return { type: 'bool', val: true };
+      case 'false': return { type: 'bool', val: false };
+      case 'nil': return { type: 'nil' };
       default: throw new Error('Literal value not recognized: ' + res);
       }
     }
@@ -280,14 +280,14 @@ g.identifier = rule('identifier', () =>
     ),
     reserved
   ),
-  s => ({ nType: 'identifier', name: s }),
+  s => ({ type: 'identifier', name: s }),
 );
 
 g.number = rule('number', () =>
   regex(/-?[0-9]+(.[0-9]+)?/),
-  numStr => ({ nType: 'number', value: Number(numStr) })
+  numStr => ({ type: 'number', value: Number(numStr) })
 );
 g.string = rule('string', () =>
   regex(/"(\\[\\\"ntr]|[^"\\])*"/),
-  s => ({ nType: 'string', value: s }),
+  s => ({ type: 'string', value: s }),
 );

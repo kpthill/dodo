@@ -18,23 +18,27 @@ export const evalDodo = (node, env=[{}]) => {
   return fn(node, env);
 };
 
-evaluators.program = (node, env) => node.exprs.map(expr => evalDodo(expr, env));
+evaluators.program = (node, env) => node.exprs.map(expr => evalDodo(expr, env)).at(-1);
 
 function makeLambda(args, body, env) {
-  return {
-    vType: "lambda",
-    args, body, env
-  };
+  return () => {
+    const newBindings = {};
+    for (var i = 0; i < args.length; i++) {
+      newBindings[args[i].name] = arguments[i];
+    }
+    functionEnv = [...env, newBindings];
+    return evalDodo(body, functionEnv);
+  }
 }
 
 evaluators.defn = (node, env) => {
   // xcxc note to self - the env will include things defined in the outer
   // environment - ok?
   env.at(-1)[node.name] = makeLambda(node.args, node.body, node.env);
-  return { vType: 'nil' };
+  return null;
 };
 
 evaluators.def = (node, env) => {
   env.at(-1)[node.name] = evalDodo(node.value, env);
-  return { vType: 'nil' };
+  return null;
 };
