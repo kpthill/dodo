@@ -1,5 +1,3 @@
-const LOG_HEAD = 10;
-
 ////////////////////////////////////////////////////////////////////////////////
 // PARSING
 // A parser is a function string -> { result: any, rest: string } | null
@@ -34,7 +32,7 @@ export function lit(str) {
   }
 }
 
-// like lit(), but requires that it not be extensible to an identifier
+// Like lit(), but requires that it not be extensible to an identifier
 export function tok(str) {
   const len = str.length;
   return input => {
@@ -56,8 +54,6 @@ export function regex(re) {
         ? re
         : new RegExp('^' + re.source);
   return (input) => {
-    // console.log('xcxc regex: ', input.slice(0,LOG_HEAD));
-
     const match = fixed.exec(input);
     if (!match) return null;
 
@@ -91,8 +87,6 @@ export function seq() {
 export function or() {
   const parsers = [...arguments];
   return (input) => {
-    // console.log('xcxc or: ', input.slice(0,LOG_HEAD));
-
     for (var i = 0; i < parsers.length; i++) {
       const res = parsers[i](input);
 
@@ -111,7 +105,6 @@ export function many(parser) {
   }
 
   return (input) => {
-    // console.log('xcxc many: ', input.slice(0,LOG_HEAD));
     return recur(input, []);
   };
 }
@@ -146,8 +139,15 @@ export const barring = (parser, barred) => {
 // added to the grammar yet, the rule function accepts a thunk and doesn't evaluate it until
 // runtime. It also provides some utilities for debugging and will in the future give hooks for
 // processing the nodes as they're parsed.
-export const rule = (name, f) => ((input) => {
-  console.log('xcxc ' + name + ' input = ', input.slice(0,LOG_HEAD));
-  const parser = f();
-  return parser(trimWS(input));
+const DEBUG = false;
+const LOG_HEAD = 10;
+export const rule = (name, parserThunk, resultCleaner) => ((input) => {
+  if (DEBUG) console.log('xcxc ' + name + ' input = ', input.slice(0, LOG_HEAD));
+  const parser = parserThunk();
+  const res = parser(trimWS(input));
+  if (!res || !resultCleaner) return res;
+  return {
+    result: resultCleaner(res.result),
+    rest: res.rest,
+  };
 });
