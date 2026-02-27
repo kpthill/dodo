@@ -1,6 +1,6 @@
 # Dodo Language Specification
 
-**Version:** 0.2.2 (Draft)
+**Version:** 0.2.3 (Draft)
 
 Dodo is a small, purely functional, expression-based programming language
 with Lisp-style syntax. It is designed to be implementable in a weekend as a
@@ -27,8 +27,7 @@ Dodo is dynamically typed. Values carry their type at runtime.
 
 | Type     | Literal Examples               | Notes                                    |
 |----------|--------------------------------|------------------------------------------|
-| `int`    | `0`, `42`, `-7`                | Arbitrary-precision or JS number         |
-| `float`  | `3.14`, `-0.5`, `1.0`          | Must contain a `.`                       |
+| `number` | `0`, `42`, `-7`, `3.14`        | JS number (IEEE 754 double)              |
 | `bool`   | `true`, `false`                |                                          |
 | `string` | `"hello"`, `"it's \"fine\""`   | Double-quoted, backslash escapes         |
 | `list`   | `[1 2 3]`                      | Heterogeneous, immutable                 |
@@ -39,8 +38,8 @@ Dodo is dynamically typed. Values carry their type at runtime.
 ### 2.1 Type Coercion
 
 There is no implicit type coercion. `(+ 1 "hello")` is a runtime error. Use
-explicit conversion functions (`int->string`, `string->int`, etc.) when
-needed.
+explicit conversion functions (`number->string`, `string->number`, etc.)
+when needed.
 
 ---
 
@@ -66,7 +65,7 @@ x
 my-var
 empty?
 do-thing!
-int->string
+number->string
 +
 <=
 !=
@@ -80,9 +79,9 @@ separator).
 
 ### 3.4 Numeric Literals
 
-- Integers: optional `-`, then one or more digits. `42`, `-7`, `0`.
-- Floats: optional `-`, digits, `.`, digits. `3.14`, `-0.5`. At least one
-  digit must appear on each side of the `.`.
+Numbers are IEEE 754 doubles (JS `number`). Literals may be written as
+whole numbers or with a decimal point: `42`, `-7`, `3.14`, `-0.5`. When a
+decimal point is present, at least one digit must appear on each side.
 
 ### 3.5 String Literals
 
@@ -335,16 +334,16 @@ branch ensures a match.
 
 ### 6.1 Arithmetic
 
-All arithmetic operators work on both ints and floats. Mixing int and float
-promotes the result to float.
+All arithmetic operators work on `number` values and follow standard JS
+number semantics (IEEE 754).
 
-| Function    | Example            | Notes                         |
-|-------------|--------------------|-------------------------------|
-| `+`         | `(+ 1 2)` → `3`   | Also: variadic `(+ 1 2 3)`   |
-| `-`         | `(- 5 3)` → `2`   | Unary: `(- x)` negates       |
-| `*`         | `(* 2 3)` → `6`   | Variadic                      |
-| `/`         | `(/ 10 3)` → `3`  | Integer division for ints     |
-| `%`         | `(% 10 3)` → `1`  | Modulo                        |
+| Function    | Example               | Notes                         |
+|-------------|-----------------------|-------------------------------|
+| `+`         | `(+ 1 2)` → `3`      | Also: variadic `(+ 1 2 3)`   |
+| `-`         | `(- 5 3)` → `2`      | Unary: `(- x)` negates       |
+| `*`         | `(* 2 3)` → `6`      | Variadic                      |
+| `/`         | `(/ 10 3)` → `3.333…`| JS division (not truncating)  |
+| `%`         | `(% 10 3)` → `1`     | Modulo                        |
 
 ### 6.2 Comparison
 
@@ -424,23 +423,18 @@ numbers and strings (lexicographic).
 
 ### 6.7 Type Checking and Conversion
 
-| Function       | Example                        | Notes                              |
-|----------------|--------------------------------|------------------------------------|
-| `type`         | `(type 42)` → `"int"`         | Returns type as a string           |
-| `int?`         | `(int? 42)` → `true`          |                                    |
-| `float?`       | `(float? 3.14)` → `true`      |                                    |
-| `string?`      | `(string? "hi")` → `true`     |                                    |
-| `bool?`        | `(bool? true)` → `true`       |                                    |
-| `list?`        | `(list? [1])` → `true`        |                                    |
-| `map?`         | `(map? {})` → `true`          |                                    |
-| `nil?`         | `(nil? nil)` → `true`         |                                    |
-| `fn?`          | `(fn? +)` → `true`            |                                    |
-| `int->float`   | `(int->float 3)` → `3.0`      |                                    |
-| `float->int`   | `(float->int 3.7)` → `3`      | Truncates toward zero              |
-| `int->string`  | `(int->string 42)` → `"42"`   |                                    |
-| `string->int`  | `(string->int "42")` → `42`   | Error if not parseable             |
-| `float->string`| `(float->string 3.14)` → `"3.14"` |                                |
-| `string->float`| `(string->float "3.14")` → `3.14` |                                |
+| Function         | Example                          | Notes                          |
+|------------------|----------------------------------|--------------------------------|
+| `type`           | `(type 42)` → `"number"`        | Returns type as a string       |
+| `number?`        | `(number? 42)` → `true`         |                                |
+| `string?`        | `(string? "hi")` → `true`       |                                |
+| `bool?`          | `(bool? true)` → `true`         |                                |
+| `list?`          | `(list? [1])` → `true`          |                                |
+| `map?`           | `(map? {})` → `true`            |                                |
+| `nil?`           | `(nil? nil)` → `true`           |                                |
+| `fn?`            | `(fn? +)` → `true`              |                                |
+| `number->string` | `(number->string 42)` → `"42"`  |                                |
+| `string->number` | `(string->number "3.14")` → `3.14` | Error if not parseable      |
 
 ### 6.8 I/O (Via FFI Convenience Wrappers)
 
@@ -476,7 +470,7 @@ at the boundary:
 
 | Dodo           | JS                   |
 |----------------|----------------------|
-| `int`, `float` | `number`             |
+| `number`       | `number`             |
 | `bool`         | `boolean`            |
 | `string`       | `string`             |
 | `nil`          | `null`               |
@@ -545,7 +539,7 @@ order. The program's result is the value of the last expression.
     (1 1)
     (n (+ (fib (- n 1)) (fib (- n 2))))))
 
-(println (str "fib(10) = " (int->string (fib 10))))
+(println (str "fib(10) = " (number->string (fib 10))))
 ```
 
 ### 8.1 File Extension
@@ -734,7 +728,7 @@ list-pat    = pattern ;
 
 map-pat-entry = expr ':' pattern ;
 
-literal     = integer | float | string | 'true' | 'false' | 'nil' ;
+literal     = number | string | 'true' | 'false' | 'nil' ;
 
 identifier  = [a-zA-Z_?!][a-zA-Z0-9_?!>*=\-]*
             | [+\-*/%<>=][+\-*/%<>=]* ;
@@ -742,8 +736,7 @@ identifier  = [a-zA-Z_?!][a-zA-Z0-9_?!>*=\-]*
                  match, and, or, js, js/import, js/method, js/get,
                  true, false, nil, when *)
 
-integer     = '-'? [0-9]+ ;
-float       = '-'? [0-9]+ '.' [0-9]+ ;
+number      = '-'? [0-9]+ ('.' [0-9]+)? ;
 string      = '"' (escape | [^"\\])* '"' ;
 escape      = '\\' [\\\"ntr] ;
 comment     = ';' [^\n]* ;
