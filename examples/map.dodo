@@ -1,0 +1,44 @@
+; map.dodo — exercising map operations
+
+(def m {"a": 1, "b": 2, "c": 3})
+
+; Basic access
+(println (get m "a"))             ; 1
+(println (get m "z"))             ; nil
+(println (get-or m "z" 99))       ; 99
+(println (has? m "b"))            ; true
+(println (has? m "z"))            ; false
+
+; Keys, vals, entries
+(println (keys m))                ; ["a", "b", "c"]
+(println (vals m))                ; [1, 2, 3]
+(println (entries m))             ; [["a",1], ["b",2], ["c",3]]
+
+; Functional updates (return new maps)
+(def m2 (put m "d" 4))
+(println (get m2 "d"))            ; 4
+(println (get m  "d"))            ; nil  (original unchanged)
+
+(def m3 (remove m "b"))
+(println (has? m3 "b"))           ; false
+(println (has? m  "b"))           ; true  (original unchanged)
+
+; Merge (right side wins on conflict)
+(def merged (merge {"x": 1, "y": 2} {"y": 99, "z": 3}))
+(println (get merged "x"))        ; 1
+(println (get merged "y"))        ; 99
+(println (get merged "z"))        ; 3
+
+; len and empty?
+(println (len m))                 ; 3
+(println (empty? {}))             ; true
+(println (empty? m))              ; false
+
+; Building a map from a list using fold
+(def index
+  (fold (fn (acc entry)
+          (put acc (nth entry 0) (nth entry 1)))
+        {}
+        [["one" 1] ["two" 2] ["three" 3]]))
+
+(println (get index "two"))       ; 2

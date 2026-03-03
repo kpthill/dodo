@@ -1,0 +1,76 @@
+; match.dodo — exercising pattern matching
+
+; Literal patterns
+(defn describe (n)
+  (match n
+    (0     "zero")
+    (1     "one")
+    (true  "yes")
+    (false "no")
+    (nil   "nothing")
+    (_     "something else")))
+
+(println (describe 0))     ; zero
+(println (describe 1))     ; one
+(println (describe true))  ; yes
+(println (describe nil))   ; nothing
+(println (describe 42))    ; something else
+
+; Guard clauses
+(defn sign (n)
+  (match n
+    (x when (> x 0) "positive")
+    (x when (< x 0) "negative")
+    (_               "zero")))
+
+(println (sign 5))    ; positive
+(println (sign -3))   ; negative
+(println (sign 0))    ; zero
+
+; List destructuring
+(defn sum (lst)
+  (match lst
+    ([]         0)
+    ([x . rest] (+ x (sum rest)))))
+
+(println (sum [1 2 3 4 5]))   ; 15
+(println (sum []))             ; 0
+
+; Nested list patterns
+(defn classify-point (point)
+  (match point
+    ([0 0] "origin")
+    ([x 0] (str "x-axis at " (number->string x)))
+    ([0 y] (str "y-axis at " (number->string y)))
+    ([x y] (str (number->string x) "," (number->string y)))))
+
+(println (classify-point [0 0]))   ; origin
+(println (classify-point [3 0]))   ; x-axis at 3
+(println (classify-point [0 4]))   ; y-axis at 4
+(println (classify-point [3 4]))   ; 3,4
+
+; Map destructuring
+(defn greet (person)
+  (match person
+    ({"name": name, "age": age}
+      (str "Hello " name ", age " (number->string age)))))
+
+(println (greet {"name": "Alice", "age": 30}))  ; Hello Alice, age 30
+(println (greet {"name": "Bob",   "age": 17}))  ; Hello Bob, age 17
+
+; Map destructuring with rest
+(defn first-entry (m)
+  (match m
+    ({"name": name . _} (str "name is " name))))
+
+(println (first-entry {"name": "Charlie", "age": 25, "city": "Portland"}))
+; name is Charlie
+
+; Wildcard
+(defn maybe-head (lst)
+  (match lst
+    ([]        nil)
+    ([x . _]   x)))
+
+(println (maybe-head [42 1 2]))  ; 42
+(println (maybe-head []))        ; nil

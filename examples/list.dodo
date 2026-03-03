@@ -1,0 +1,33 @@
+; list.dodo — exercising list operations
+
+; Basic access
+(println (head [1 2 3]))                      ; 1
+(println (tail [1 2 3]))                      ; [2, 3]
+(println (nth [10 20 30] 1))                  ; 20
+(println (len [1 2 3]))                       ; 3
+(println (empty? []))                         ; true
+(println (empty? [1]))                        ; false
+
+; Construction
+(println (cons 0 [1 2 3]))                    ; [0, 1, 2, 3]
+(println (concat [1 2] [3 4]))                ; [1, 2, 3, 4]
+(println (reverse [1 2 3]))                   ; [3, 2, 1]
+(println (range 0 5))                         ; [0, 1, 2, 3, 4]
+
+; Higher-order
+(println (map (fn (x) (* x x)) [1 2 3 4 5])) ; [1, 4, 9, 16, 25]
+(println (filter (fn (x) (> x 3)) [1 2 3 4 5])) ; [4, 5]
+(println (fold (fn (acc x) (+ acc x)) 0 [1 2 3 4 5])) ; 15
+
+; Sorting
+(println (sort [3 1 4 1 5 9 2 6]))            ; [1, 1, 2, 3, 4, 5, 6, 9]
+(println (sort-by (fn (x) (nth x 1))
+                  [["b" 2] ["a" 1] ["c" 3]])) ; [["a",1], ["b",2], ["c",3]]
+
+; Zip and enumerate
+(println (zip [1 2 3] ["a" "b" "c"]))         ; [[1,"a"], [2,"b"], [3,"c"]]
+(println (enumerate ["x" "y" "z"]))           ; [[0,"x"], [1,"y"], [2,"z"]]
+
+; Recursive sum using fold
+(def total (fold (fn (acc x) (+ acc x)) 0 (range 1 11)))
+(println total)                               ; 55
