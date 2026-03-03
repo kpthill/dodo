@@ -1,6 +1,6 @@
 # Dodo Language Specification
 
-**Version:** 0.2.4 (Draft)
+**Version:** 0.2.5 (Draft)
 
 Dodo is a small, purely functional, expression-based programming language
 with Lisp-style syntax. It is designed to be implementable in a weekend as a
@@ -322,7 +322,23 @@ The guard expression is evaluated after a successful structural match, with
 the pattern's bindings in scope. If the guard returns falsy, matching
 continues to the next branch.
 
-### 5.3 Exhaustiveness
+### 5.3 Matching Against Existing Variables
+
+An identifier in pattern position always introduces a **new binding**,
+shadowing any outer variable of the same name. There is no way to match
+against the *value* of an existing variable directly. Use a guard instead:
+
+```
+(match shape
+  ({"kind": "circle", "radius": rad} when (= rad r) body)
+  ...)
+```
+
+**Design note:** A pin operator (e.g. `^r` to mean "match against the
+current value of `r`") would address this more ergonomically but has been
+deferred for now.
+
+### 5.4 Exhaustiveness
 
 There is no compile-time exhaustiveness check. A runtime error is raised if
 no pattern matches. Using a wildcard `_` or variable pattern as the final
