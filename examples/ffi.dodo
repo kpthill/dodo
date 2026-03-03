@@ -1,0 +1,57 @@
+; ffi.dodo — exercising the JavaScript FFI
+
+; --- js: call a global JS function by dot-path ---
+
+(println (js "Math.sqrt" 144))          ; 12
+(println (js "Math.pow" 2 10))          ; 1024
+(println (js "Math.abs" -42))           ; 42
+(println (js "Math.max" 3 7 2 9 1))     ; 9
+
+(println (js "JSON.stringify" {"x": 1, "y": 2}))  ; {"x":1,"y":2}
+
+; Round-trip through JSON
+(def parsed (js "JSON.parse" "{\"name\":\"dodo\",\"version\":1}"))
+(println (js/get parsed "name"))        ; dodo
+(println (js/get parsed "version"))     ; 1
+
+; --- js/get: access a property on a global or object ---
+
+(def pi (js/get "Math" "PI"))
+(println pi)                            ; 3.141592653589793
+
+(println (js/get "Number" "MAX_SAFE_INTEGER"))  ; 9007199254740991
+(println (js/get "Number" "EPSILON"))           ; 2.220446049250313e-16
+
+; js/get on a local object
+(def obj (js "JSON.parse" "{\"a\":1,\"b\":2}"))
+(println (js/get obj "a"))              ; 1
+(println (js/get obj "b"))             ; 2
+
+; --- js/import and js/method: import a Node module and call methods ---
+
+(def path (js/import "path"))
+
+(println (js/method path "join" "foo" "bar" "baz"))  ; foo/bar/baz
+(println (js/method path "extname" "index.html"))     ; .html
+(println (js/method path "basename" "src/eval.js"))   ; eval.js
+(println (js/method path "dirname"  "src/eval.js"))   ; src
+
+; Use the os module to get system info
+(def os (js/import "os"))
+
+(println (js/method os "platform"))    ; darwin / linux / win32
+(println (js/method os "arch"))        ; x64 / arm64
+
+; --- Combining FFI with Dodo functions ---
+
+; Use Math.random to generate a list of random numbers
+(def randoms
+  (map (fn (_) (js "Math.floor" (* (js "Math.random") 100)))
+       (range 0 5)))
+
+(println randoms)                       ; five random ints in [0, 100)
+
+; Use JSON round-trip to deep-clone a list of maps
+(def data [{"name": "Alice"} {"name": "Bob"}])
+(def clone (js "JSON.parse" (js "JSON.stringify" data)))
+(println (js/get (nth clone 0) "name")) ; Alice
