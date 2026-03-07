@@ -39,16 +39,6 @@ export const coreEnv = {
     return map[key] !== undefined;
   },
   merge: (map1, map2) => {
-
+    return {...map1, ...map2};
   },
 };
-
-| `get`       | `(get m "key")` → value or `nil`              |                              |
-| `get-or`    | `(get-or m "key" default)` → value or default |                              |
-| `put`       | `(put m "key" val)` → new map                 | Returns a new map            |
-| `remove`    | `(remove m "key")` → new map                  | Returns a new map            |
-| `keys`      | `(keys m)` → list of keys                     |                              |
-| `vals`      | `(vals m)` → list of values                   |                              |
-| `entries`   | `(entries m)` → list of [key, value] lists     |                              |
-| `has?`      | `(has? m "key")` → `bool`                     |                              |
-| `merge`     | `(merge m1 m2)` → new map                     | m2 values overwrite m1       |
