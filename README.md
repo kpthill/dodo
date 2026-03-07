@@ -1,7 +1,8 @@
 # Dodo
 
-A small, purely functional, Lisp-style programming language implemented as a tree-walking
-interpreter in JavaScript. Built as a learning exercise.
+A small, purely functional, Lisp-style programming language implemented as a tree-walking interpreter in JavaScript. Built as a learning exercise.
+
+`dodo.js` and the `impl` folder are all written by hand; the rest is mostly by Claude. The language is called dodo because writing code by hand is starting to feel like an extinct way of working.
 
 ## Running
 
