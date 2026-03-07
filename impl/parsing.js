@@ -14,7 +14,7 @@
 export function trimWS(s) {
   const trimmed = s.replace(/^[\s,]*/, '');
   if (trimmed.match(/^;/)) {
-    return trimWS(trimmed.replace(/^;[^\r\n]*[\n\r]/,''));
+    return trimWS(trimmed.replace(/^;[^\r\n]*([\r\n]|$)/,''));
   }
   return trimmed;
 }
@@ -109,8 +109,20 @@ export function many(parser) {
   };
 }
 
+function flatten1(parser) {
+  return (input) => {
+    const res = parser(input);
+    if (res === null) return res;
+
+    return {
+      result: res.result.flat(1),
+      rest: res.rest,
+    };
+  }
+}
+
 export function oneOrMore(parser) {
-  return seq(parser, many(parser));
+  return flatten1(seq(parser, many(parser)));
 }
 
 const empty = (input) => ({

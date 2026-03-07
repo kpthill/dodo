@@ -47,8 +47,8 @@ g.fnCall = rule('fnCall', () =>
   seq(lit('('), oneOrMore(g.expr), lit(')')),
   ([open, [fn, ...args], close]) => ({
     type: 'fnCall',
-    fn, args
-  }),
+    fn, args: args,
+  })
 );
 
 g.list = rule('list', () =>
@@ -179,7 +179,7 @@ g.jsMethod = rule('jsMethod', () =>
 g.jsGet = rule('jsGet', () =>
   seq(tok('js/get'), g.expr, g.string),
   ([tag, object, key]) => ({
-    type: 'jsMethod',
+    type: 'jsGet',
     object, key
   }),
 );
@@ -188,7 +188,7 @@ g.js = rule('js', () =>
   seq(tok('js'), g.string, many(g.expr)),
   ([tag, functionName, args]) => ({
     type: 'js',
-    object, functionName, args
+    functionName, args
   }),
 );
 
@@ -266,8 +266,8 @@ g.literal = rule('literal', () =>
   res => {
     if (typeof res === 'string') {
       switch (res) {
-      case 'true': return { type: 'bool', val: true };
-      case 'false': return { type: 'bool', val: false };
+      case 'true': return { type: 'bool', value: true };
+      case 'false': return { type: 'bool', value: false };
       case 'nil': return { type: 'nil' };
       default: throw new Error('Literal value not recognized: ' + res);
       }
@@ -293,5 +293,6 @@ g.number = rule('number', () =>
 );
 g.string = rule('string', () =>
   regex(/"(\\[\\\"ntr]|[^"\\])*"/),
-  s => ({ type: 'string', value: s }),
+  // Use eval to handle stripping the ""s and evaluating escaped chars
+  s => ({ type: 'string', value: eval(s) }),
 );
