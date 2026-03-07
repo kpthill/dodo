@@ -23,8 +23,6 @@ export const evalDodo = (node, env=[coreEnv]) => {
   return fn(node, env);
 };
 
-evaluators.program = (node, env) => node.exprs.map(expr => evalDodo(expr, env)).at(-1);
-
 function makeLambda(args, body, env) {
   return () => {
     const newBindings = {};
@@ -36,6 +34,30 @@ function makeLambda(args, body, env) {
     return evalDodo(body, functionEnv);
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+evaluators.program = (node, env) => node.exprs.map(expr => evalDodo(expr, env)).at(-1);
+
+evaluators.fnCall = (node, env) => {
+  const fn = evalDodo(node.fn, env);
+  return fn.apply(fn, node.args.map(arg => evalDodo(arg, env)));
+};
+
+evaluators.list = (node, env) => {
+  return node.exprs.map(expr => evalDodo(expr, env));
+};
+
+evaluators.map = (node, env) => {
+  const res = {};
+  node.entries.forEach(entry => {
+    const { key, value } = entry;
+    const resKey = evalDodo(key, env);
+    const resValue = evalDodo(value, env);
+    res[resKey] = resValue;
+  });
+  return res;
+};
 
 evaluators.defn = (node, env) => {
   // xcxc note to self - the env will include things defined in the outer
@@ -83,29 +105,9 @@ evaluators.branch = (node, env, matchVal) => {
   };
 };
 
-evaluators.list = (node, env) => {
-  return node.exprs.map(expr => evalDodo(expr, env));
-};
-
-evaluators.map = (node, env) => {
-  const res = {};
-  node.entries.forEach(entry => {
-    const { key, value } = entry;
-    const resKey = evalDodo(key, env);
-    const resValue = evalDodo(value, env);
-    res[resKey] = resValue;
-  });
-  return res;
-};
-
 evaluators.string = (node, env) => node.value;
 evaluators.number = (node, env) => node.value;
 evaluators.bool = (node, env) => node.value;
-
-evaluators.fnCall = (node, env) => {
-  const fn = evalDodo(node.fn, env);
-  return fn.apply(fn, node.args.map(arg => evalDodo(arg, env)));
-};
 
 evaluators.identifier = (node, env) => getEnvValue(node.name, env);
 

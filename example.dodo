@@ -1,4 +1,3 @@
-
 ; A tiny program that processes a list of people
 
 (def people
