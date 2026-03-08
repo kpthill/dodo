@@ -2,7 +2,7 @@
 
 A small, purely functional, Lisp-style programming language implemented as a tree-walking interpreter in JavaScript. Built as a learning exercise.
 
-`dodo.js` and the `impl` folder are all written by hand; the rest is mostly by Claude. The language is called dodo because writing code by hand is starting to feel like an extinct way of working.
+`dodo.js` and the `impl` folder are all written by hand; the rest is mostly by Claude. The language is called dodo because writing code by hand is starting to feel like an extinct way of working, even though it is fun. 😅
 
 ## Running
 
@@ -14,8 +14,7 @@ Requires Node.js. See `examples/` for sample programs.
 
 ## Language
 
-Dodo is expression-based and dynamically typed. Everything returns a value. There is no
-mutation — all bindings are immutable — and no implicit type coercion.
+Dodo is expression-based and dynamically typed. Everything returns a value. There is no mutation — all bindings are immutable — and no implicit type coercion.
 
 ### Types
 
@@ -25,9 +24,9 @@ mutation — all bindings are immutable — and no implicit type coercion.
 | `bool`   | `true`, `false`                   |
 | `string` | `"hello"`, `"line\none"`          |
 | `list`   | `[1 2 3]`, `[]`                   |
-| `map`    | `{"x": 1, "y": 2}`, `{}`         |
+| `map`    | `{"x": 1, "y": 2}`, `{}`          |
 | `nil`    | `nil`                             |
-| `fn`     | `(fn (x) (* x x))`               |
+| `fn`     | `(fn (x) (* x x))`                |
 
 Numbers are IEEE 754 doubles (same as JavaScript). Only `false` and `nil` are falsy.
 
