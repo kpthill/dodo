@@ -3,11 +3,12 @@
 // A parser is a function string -> { result: any, rest: string } | null
 //   - The first case handles a match; the second no match
 // They can be combined by operators:
-//   - seqUntokenized([parser_a, parser_b]): runs a, then sends its rest to b, and returns the list of all the
-//     results
-//   - seq([parser_a, parser_b]): equivalent to seqUntokenized([many(whitespace), parser_a, many(whitespace), parser_b, many(whitespace)])
+//   - seq([parser_a, parser_b]): runs a, then sends its rest to b, and returns the list of all the results
 //   - or([a, b, c]): returns the result of the first of a, b, c that is non-null
-//   - many(parser):
+//   - many(parser): runs the parser until it returns null, and joins the results in a list
+//   - oneOrMore(parser): as many, but fails if it doesn't match at least once
+//   - opt(parser): makes a parser optional, potentially matching nothing
+//   - barring(parser): certain results will cause the parser to instead fail
 
 // commas are treated as whitespace in dodo, so we need a custom expression of trim. this also
 // strips comments
@@ -146,11 +147,12 @@ export const barring = (parser, barred) => {
   };
 };
 
-// We put all our grammar definitions into an object so that lookups happen at runtime - this allows
-// grammar element to reference each other or themselves. To reference things that haven't been
-// added to the grammar yet, the rule function accepts a thunk and doesn't evaluate it until
-// runtime. It also provides some utilities for debugging and will in the future give hooks for
-// processing the nodes as they're parsed.
+// We put all our grammar definitions into an object so that lookups happen at
+// runtime - this allows grammar elements to reference each other or
+// themselves. To reference things that haven't been added to the grammar yet,
+// the rule function accepts a thunk and doesn't evaluate it until runtime. It
+// also provides some utilities for debugging and will in the future give hooks
+// for processing the nodes as they're parsed.
 const DEBUG = false;
 const LOG_HEAD = 10;
 export const rule = (name, parserThunk, resultCleaner) => ((input) => {
