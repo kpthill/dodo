@@ -1,5 +1,8 @@
 {
   "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
   "dependencies": {
     "readline": "^1.3.0"
   }
