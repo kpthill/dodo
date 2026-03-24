@@ -136,6 +136,14 @@ g['let'] = rule('let', () =>
   }),
 );
 
+g.binding = rule('binding', () =>
+  seq(lit('('), g.identifier, g.expr, lit(')')),
+  ([open, id, value, close]) => ({
+    type: 'binding',
+    id, value
+  }),
+);
+
 g.match = rule('match', () =>
   seq(tok('match'), g.expr, many(g.branch)),
   ([match, expr, branches]) => ({
@@ -160,6 +168,22 @@ g.or = rule('or', () =>
   }),
 );
 
+g.js = rule('js', () =>
+  seq(tok('js'), g.string, many(g.expr)),
+  ([tag, functionName, args]) => ({
+    type: 'js',
+    functionName, args
+  }),
+);
+
+g.jsGet = rule('jsGet', () =>
+  seq(tok('js/get'), g.expr, g.string),
+  ([tag, object, key]) => ({
+    type: 'jsGet',
+    object, key
+  }),
+);
+
 g.jsImport = rule('jsImport', () =>
   seq(tok('js/import'), g.string),
   ([tag, module]) => ({
@@ -173,30 +197,6 @@ g.jsMethod = rule('jsMethod', () =>
   ([tag, object, methodName, args]) => ({
     type: 'jsMethod',
     object, methodName, args
-  }),
-);
-
-g.jsGet = rule('jsGet', () =>
-  seq(tok('js/get'), g.expr, g.string),
-  ([tag, object, key]) => ({
-    type: 'jsGet',
-    object, key
-  }),
-);
-
-g.js = rule('js', () =>
-  seq(tok('js'), g.string, many(g.expr)),
-  ([tag, functionName, args]) => ({
-    type: 'js',
-    functionName, args
-  }),
-);
-
-g.binding = rule('binding', () =>
-  seq(lit('('), g.identifier, g.expr, lit(')')),
-  ([open, id, value, close]) => ({
-    type: 'binding',
-    id, value
   }),
 );
 

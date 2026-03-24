@@ -23,6 +23,10 @@ export const evalDodo = (node, env=[coreEnv]) => {
   return fn(node, env);
 };
 
+function isTruthy(val) {
+  return !(val === false || val === null);
+}
+
 function makeLambda(args, body, env) {
   return () => {
     const newBindings = {};
@@ -59,6 +63,11 @@ evaluators.map = (node, env) => {
   return res;
 };
 
+evaluators.def = (node, env) => {
+  env.at(-1)[node.name.name] = evalDodo(node.value, env);
+  return null;
+};
+
 evaluators.defn = (node, env) => {
   // xcxc note to self - the env will include things defined in the outer
   // environment - ok?
@@ -66,9 +75,24 @@ evaluators.defn = (node, env) => {
   return null;
 };
 
-evaluators.def = (node, env) => {
-  env.at(-1)[node.name.name] = evalDodo(node.value, env);
-  return null;
+evaluators.fn = (node, env) => {
+  return makeLambda(node.args, node.body, env);
+};
+
+evaluators['do'] = (node, env) => {
+  let retval = null;
+  for (const expr of node.exprs) {
+    retval = evalDodo(expr, env);
+  }
+  return retval;
+};
+
+evaluators['let'] = (node, env) => {
+  const newEnv = [...env, {}];
+  node.bindings.forEach(({id, value}) => {
+    newEnv[-1][id.name] = evalDodo(value, newEnv);
+  });
+  return evalDodo(node.expr, newEnv);
 };
 
 evaluators.match = (node, env) => {
@@ -105,9 +129,28 @@ evaluators.branch = (node, env, matchVal) => {
   };
 };
 
+evaluators.and = (node, env) => {
+  let lastVal = true;
+  for (const expr of node.exprs) {
+    lastVal = evalDodo(expr, env);
+    if (!isTruthy(lastVal)) return lastVal;
+  }
+  return lastVal;
+};
+
+evaluators.or = (node, env) => {
+  let lastVal = false;
+  for (const expr of node.exprs) {
+    lastVal = evalDodo(expr, env);
+    if (isTruthy(lastVal)) return lastVal;
+  }
+  return lastVal;
+};
+
 evaluators.string = (node, env) => node.value;
 evaluators.number = (node, env) => node.value;
 evaluators.bool = (node, env) => node.value;
+evaluators.nil = (node, env) => null;
 
 evaluators.identifier = (node, env) => getEnvValue(node.name, env);
 
