@@ -114,3 +114,69 @@ describe('and / or', () => {
     assert.equal(dodo('(and "" "done")'), 'done');
   });
 });
+
+describe('structural equality (=)', () => {
+  it('numbers', () => {
+    assert.equal(dodo('(= 1 1)'), true);
+    assert.equal(dodo('(= 1 2)'), false);
+    assert.equal(dodo('(= 1.0 1.0)'), true);
+  });
+
+  it('strings', () => {
+    assert.equal(dodo('(= "hello" "hello")'), true);
+    assert.equal(dodo('(= "hello" "world")'), false);
+  });
+
+  it('booleans', () => {
+    assert.equal(dodo('(= true true)'), true);
+    assert.equal(dodo('(= false false)'), true);
+    assert.equal(dodo('(= true false)'), false);
+  });
+
+  it('nil', () => {
+    assert.equal(dodo('(= nil nil)'), true);
+  });
+
+  it('lists — structural, not by reference', () => {
+    assert.equal(dodo('(= [1 2 3] [1 2 3])'), true);
+    assert.equal(dodo('(= [1 2 3] [1 2 4])'), false);
+    assert.equal(dodo('(= [1 2] [1 2 3])'), false);
+    assert.equal(dodo('(= [] [])'), true);
+  });
+
+  it('nested lists', () => {
+    assert.equal(dodo('(= [[1 2] [3 4]] [[1 2] [3 4]])'), true);
+    assert.equal(dodo('(= [[1 2] [3 4]] [[1 2] [3 5]])'), false);
+  });
+
+  it('maps — structural, not by reference', () => {
+    assert.equal(dodo('(= {"a": 1, "b": 2} {"a": 1, "b": 2})'), true);
+    assert.equal(dodo('(= {"a": 1} {"a": 2})'), false);
+    assert.equal(dodo('(= {"a": 1} {"a": 1, "b": 2})'), false);
+    assert.equal(dodo('(= {} {})'), true);
+  });
+
+  it('nested maps', () => {
+    assert.equal(dodo('(= {"a": {"x": 1}} {"a": {"x": 1}})'), true);
+    assert.equal(dodo('(= {"a": {"x": 1}} {"a": {"x": 2}})'), false);
+  });
+
+  it('mixed nesting — lists of maps', () => {
+    assert.equal(dodo('(= [{"a": 1} {"b": 2}] [{"a": 1} {"b": 2}])'), true);
+    assert.equal(dodo('(= [{"a": 1}] [{"a": 2}])'), false);
+  });
+
+  it('cross-type is never equal', () => {
+    assert.equal(dodo('(= 1 "1")'), false);
+    assert.equal(dodo('(= 0 false)'), false);
+    assert.equal(dodo('(= nil false)'), false);
+    assert.equal(dodo('(= [] {})'), false);
+  });
+
+  it('!= is the negation of =', () => {
+    assert.equal(dodo('(!= 1 2)'), true);
+    assert.equal(dodo('(!= 1 1)'), false);
+    assert.equal(dodo('(!= [1 2] [1 2])'), false);
+    assert.equal(dodo('(!= [1 2] [1 3])'), true);
+  });
+});
