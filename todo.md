@@ -12,9 +12,9 @@
 - [ ] Implement map pattern destructuring (`{"x": vx}`)
 
 ## Built-ins
-- [ ] Fix `+` (missing return statement)
-- [ ] Arithmetic: `-`, `*`, `/`, `%`
-- [ ] Comparison: `=`, `!=`, `<`, `>`, `<=`, `>=`
+- [x] Fix `+` (missing return statement)
+- [x] Arithmetic: `-`, `*`, `/`, `%`
+- [x] Comparison: `=`, `!=`, `<`, `>`, `<=`, `>=`
 - [ ] Logic: `not`, `print`
 - [ ] List: `head`, `tail`, `cons`, `concat`, `len`, `nth`, `empty?`, `map`, `filter`, `fold`, `flat-map`, `range`, `reverse`, `sort`, `sort-by`, `zip`, `enumerate`
 - [ ] Map: `get`, `get-or`, `put`, `remove`, `keys`, `vals`, `entries`, `has?`, `merge`

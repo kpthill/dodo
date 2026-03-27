@@ -58,6 +58,23 @@ export const coreEnv = {
   '<=': (a, b) => a <= b,
   '>=':  (a, b) => a >= b,
 
+  // logical (`and` and `or` are special forms)
+  not: b => !b,
+
+  // string
+  'str': (...args) => args.join(""),
+  'str-len': s => s.length,
+  'str-slice': (s, start, end) => s.slice(start, end),
+  'str-index': (s, i) => (Number.isInteger(i) && i >=0 && i < s.length) ? s.charAt(i) : -1,
+  'str-split': (s, substring) => s.split(s, substring),
+  'str-join': (strings, joiner) => strings.join(joiner),
+  'str-upper': s => s.toUpperCase(),
+  'str-lower': s => s.toLowerCase(),
+  'str-trim': s => s.trim(),
+  'str-contains?': (s, substr) => s.includes(substr),
+  'str-starts?': (s, start) => s.startsWith(start),
+  'str-ends?': (s, end) => s.endsWith(end),
+
   print: s => {
     throw new Error("Print is unimplemented, use println");
   },
