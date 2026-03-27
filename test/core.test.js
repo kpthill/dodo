@@ -115,6 +115,90 @@ describe('and / or', () => {
   });
 });
 
+describe('arithmetic', () => {
+  it('+', () => {
+    assert.equal(dodo('(+ 1 2)'), 3);
+    assert.equal(dodo('(+ 1 2 3)'), 6);
+    assert.equal(dodo('(+ 0.5 0.5)'), 1);
+  });
+
+  it('+ with no args returns 0', () => {
+    assert.equal(dodo('(+)'), 0);
+  });
+
+  it('- binary', () => {
+    assert.equal(dodo('(- 5 3)'), 2);
+    assert.equal(dodo('(- 1 1.5)'), -0.5);
+  });
+
+  it('- unary negation', () => {
+    assert.equal(dodo('(- 7)'), -7);
+    assert.equal(dodo('(- -3)'), 3);
+  });
+
+  it('*', () => {
+    assert.equal(dodo('(* 2 3)'), 6);
+    assert.equal(dodo('(* 2 3 4)'), 24);
+  });
+
+  it('/', () => {
+    assert.equal(dodo('(/ 10 4)'), 2.5);
+    assert.equal(dodo('(/ 9 3)'), 3);
+  });
+
+  it('%', () => {
+    assert.equal(dodo('(% 10 3)'), 1);
+    assert.equal(dodo('(% 9 3)'), 0);
+  });
+});
+
+describe('comparison', () => {
+  it('<', () => {
+    assert.equal(dodo('(< 1 2)'), true);
+    assert.equal(dodo('(< 2 1)'), false);
+    assert.equal(dodo('(< 1 1)'), false);
+  });
+
+  it('>', () => {
+    assert.equal(dodo('(> 2 1)'), true);
+    assert.equal(dodo('(> 1 2)'), false);
+    assert.equal(dodo('(> 1 1)'), false);
+  });
+
+  it('<=', () => {
+    assert.equal(dodo('(<= 1 2)'), true);
+    assert.equal(dodo('(<= 1 1)'), true);
+    assert.equal(dodo('(<= 2 1)'), false);
+  });
+
+  it('>=', () => {
+    assert.equal(dodo('(>= 2 1)'), true);
+    assert.equal(dodo('(>= 1 1)'), true);
+    assert.equal(dodo('(>= 1 2)'), false);
+  });
+
+  it('string ordering', () => {
+    assert.equal(dodo('(< "apple" "banana")'), true);
+    assert.equal(dodo('(> "banana" "apple")'), true);
+  });
+});
+
+describe('not', () => {
+  it('negates true and false', () => {
+    assert.equal(dodo('(not true)'), false);
+    assert.equal(dodo('(not false)'), true);
+  });
+
+  it('nil is falsy', () => {
+    assert.equal(dodo('(not nil)'), true);
+  });
+
+  it('0 and empty string are truthy', () => {
+    assert.equal(dodo('(not 0)'), false);
+    assert.equal(dodo('(not "")'), false);
+  });
+});
+
 describe('structural equality (=)', () => {
   it('numbers', () => {
     assert.equal(dodo('(= 1 1)'), true);
