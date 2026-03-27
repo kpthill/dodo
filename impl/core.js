@@ -1,5 +1,41 @@
 // import process from "node:process";
 
+// from <https://stackoverflow.com/questions/65787971/ways-to-determine-if-something-is-a-plain-object-in-javascript#:~:text=Comments,-Add%20a%20comment&text=ToolJS%20has%20a%20method%20under,infact%20a%20plain%20object%20literal.&text=Under%20the%20hood%2C%20the%20method,if%20its%20a%20plain%20object.>
+const isPlainObject = value => value?.constructor === Object;
+
+function isEqual(a, b) {
+  switch(typeof a) {
+  case 'number':
+  case 'string':
+  // functions have pointer-equality semantics - distinct functions with the
+  // same definition will be treated as different.
+  case 'function':
+    return a === b;
+  case 'boolean':
+    // no "truthy" / "falsy" values - require b is a bool
+    return (a === true && b === true) || (a === false && b === false);
+  case 'object':
+    // can be hashes, lists, or nil
+    // note that this recursion will overflow on objects with cycles - ignoring for now
+    if (Array.isArray(a) && Array.isArray(b)) {
+      return a.length === b.length && a.every((aElem, i) => isEqual(aElem, b[i]));
+    } else if (a === null && b === null) {
+      return true;
+    } else if (isPlainObject(a) && isPlainObject(b)) {
+      return (
+        Object.keys(a).length === Object.keys(b).length &&
+          Object.keys(a).every(k =>
+            Object.hasOwn(b, k) && isEqual(a[k], b[k])
+          )
+      );
+    }
+    // they are objects of different types
+    return false;
+  default:
+    throw new Error('isEqual: object has unrecognized type "' + typeof a + '"');
+  }
+}
+
 export const coreEnv = {
   // arithmetic
   '+': () => arguments.reduce((a, b) => a + b, 0),
@@ -9,18 +45,18 @@ export const coreEnv = {
     case 2: return arguments[0] - arguments[1];
     default: throw new Error("wrong number of arguments to `-`");
     }
-  };
-  `*`: () => arguments.reduce((a, b) => a * b, 0),
+  },
+  '*': (...args) => args.reduce((a, b) => a * b, 1),
   '/': (num, denom) => num / denom,
   '%': (div, mod) => div % mod,
 
   // comparison
-// `=`      | `(= 1 1)` → `true`     |
-// `!=`     | `(!= 1 2)` → `true`    |
-// `<`      | `(< 1 2)` → `true`     |
-// `>`      | `(> 2 1)` → `true`     |
-// `<=`     | `(<= 1 1)` → `true`    |
-// `>=`     | `(>= 2 1)` → `true`    |
+  '=': isEqual,
+  '!=': (a, b) => !isEqual(a, b),
+  '<': (a, b) => a < b,
+  '>': (a, b) => a > b,
+  '<=': (a, b) => a <= b,
+  '>=':  (a, b) => a >= b,
 
   print: s => {
     throw new Error("Print is unimplemented, use println");

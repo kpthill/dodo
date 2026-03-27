@@ -8,7 +8,6 @@ const evaluators = {};
 // to innermost. Shadowing is allowed, so to look up a name in the environment,
 // we check each map in reverse order (innermost to outermost).
 const getEnvValue = (name, env) => {
-  // console.log("xcxc getting env value, name = ", name);
   for (var i = env.length - 1; i >= 0; i--) {
     if (env[i].hasOwnProperty(name)) return env[i][name];
   }

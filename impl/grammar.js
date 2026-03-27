@@ -279,7 +279,7 @@ g.literal = rule('literal', () =>
 g.identifier = rule('identifier', () =>
   barring(
     or(
-      regex(/[a-zA-Z_?!][a-zA-Z0-9_?!>*-]*/),
+      regex(/[a-zA-Z_?!][a-zA-Z0-9_?!>*=-]*/),
       regex(/[+\-*/%<>=]+/),
     ),
     reserved
