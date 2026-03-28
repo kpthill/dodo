@@ -66,7 +66,7 @@ export const coreEnv = {
   // logical (`and` and `or` are special forms)
   not: b => !isTruthy(b),
 
-  // string
+  // string operations
   'str': (...args) => args.join(""),
   'str-len': s => s.length,
   'str-slice': (s, start, end) => s.slice(start, end),
@@ -80,12 +80,25 @@ export const coreEnv = {
   'str-starts?': (s, start) => s.startsWith(start),
   'str-ends?': (s, end) => s.endsWith(end),
 
-  print: s => {
-    throw new Error("Print is unimplemented, use println");
-  },
-  println: s => {
-    console.log(s);
-  },
+  // // list operations
+  // 'head': l => l[0] ?? throw new Error("head called on empty list"),
+  // 'tail': l => l.length > 0 ? l[,
+  // 'cons': asdf,
+  // 'concat': asdf,
+  // 'len': asdf,
+  // 'nth': asdf,
+  // 'empty?': asdf,
+  // 'map': asdf,
+  // 'filter': asdf,
+  // 'fold': asdf,
+  // 'flat-map': asdf,
+  // 'range': asdf,
+  // 'reverse': asdf,
+  // 'sort': asdf,
+  // 'sort-by': asdf,
+  // 'zip': asdf,
+  // 'enumerate': asdf,
+
 
   // map operations
   get: (map, key) => map[key] ?? null, // null represents nil
@@ -103,4 +116,24 @@ export const coreEnv = {
   entries: (map) => Object.entries(map),
   "has?": (map, key) => (map[key] !== undefined),
   merge: (map1, map2) => ({...map1, ...map2}),
+
+  // Type Checking and Conversion
+  // 'type': asdf,
+  // 'number?': asdf,
+  // 'string?': asdf,
+  // 'bool?': asdf,
+  // 'list?': asdf,
+  // 'map?': asdf,
+  // 'nil?': asdf,
+  // 'fn?': asdf,
+  // 'number->string': asdf,
+  // 'string->number': asdf,
+
+  // I/O
+  print: s => {
+    throw new Error("Print is unimplemented, use println");
+  },
+  println: s => {
+    console.log(s);
+  },
 };
