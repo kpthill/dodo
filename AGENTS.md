@@ -10,7 +10,7 @@ Agents assist with:
 - Workspace setup and project organization
 - Spec management (versioning, clarifications, amendments)
 - Advice and guidance when asked
-- Possibly writing tests (TBD)
+- Writing and maintaining tests (in `test/`)
 
 ## Do Not Write Interpreter Code
 
@@ -36,6 +36,12 @@ Current spec version: `0.2.5`
 
 Prose in markdown files is hard-wrapped at 100 columns for comfortable
 reading in Emacs. Tables and code blocks are exempt.
+
+## Todo Tracking
+
+Patrick's implementation todos live in `todo.md`. Agents should keep that
+file up to date when new work items are identified. Do not use the Claude
+Code internal task list for Patrick's todos.
 
 ## Git Workflow
 
