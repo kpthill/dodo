@@ -3,6 +3,11 @@
 // from <https://stackoverflow.com/questions/65787971/ways-to-determine-if-something-is-a-plain-object-in-javascript#:~:text=Comments,-Add%20a%20comment&text=ToolJS%20has%20a%20method%20under,infact%20a%20plain%20object%20literal.&text=Under%20the%20hood%2C%20the%20method,if%20its%20a%20plain%20object.>
 const isPlainObject = value => value?.constructor === Object;
 
+// xcxc dedup with the version in eval.js
+function isTruthy(val) {
+  return !(val === false || val === null);
+}
+
 function isEqual(a, b) {
   switch(typeof a) {
   case 'number':
@@ -38,12 +43,12 @@ function isEqual(a, b) {
 
 export const coreEnv = {
   // arithmetic
-  '+': () => arguments.reduce((a, b) => a + b, 0),
-  '-': () => {
-    switch (arguments.length) {
-    case 1: return -(arguments[0]);
-    case 2: return arguments[0] - arguments[1];
-    default: throw new Error("wrong number of arguments to `-`");
+  '+': (...args) => args.reduce((a, b) => a + b, 0),
+  '-': (...args) => {
+    switch (args.length) {
+    case 1: return -(args[0]);
+    case 2: return args[0] - args[1];
+    default: throw new Error("wrong number of arguments to `-`: " + args.length);
     }
   },
   '*': (...args) => args.reduce((a, b) => a * b, 1),
@@ -59,7 +64,7 @@ export const coreEnv = {
   '>=':  (a, b) => a >= b,
 
   // logical (`and` and `or` are special forms)
-  not: b => !b,
+  not: b => !isTruthy(b),
 
   // string
   'str': (...args) => args.join(""),
