@@ -126,7 +126,7 @@ export const coreEnv = {
   // 'map?': asdf,
   // 'nil?': asdf,
   // 'fn?': asdf,
-  // 'number->string': asdf,
+  'number->string': n => n.toString(),
   // 'string->number': asdf,
 
   // I/O

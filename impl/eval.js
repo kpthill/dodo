@@ -27,11 +27,12 @@ function isTruthy(val) {
 }
 
 function makeLambda(args, body, env) {
-  return () => {
+  return (...innerArgs) => {
     const newBindings = {};
     for (var i = 0; i < args.length; i++) {
-      newBindings[args[i].name] = arguments[i];
+      newBindings[args[i].name] = innerArgs[i];
     }
+
 
     const functionEnv = [...env, newBindings];
     return evalDodo(body, functionEnv);
@@ -44,7 +45,8 @@ evaluators.program = (node, env) => node.exprs.map(expr => evalDodo(expr, env)).
 
 evaluators.fnCall = (node, env) => {
   const fn = evalDodo(node.fn, env);
-  return fn.apply(fn, node.args.map(arg => evalDodo(arg, env)));
+  const evaledArgs = node.args.map(arg => evalDodo(arg, env));
+  return fn.apply(null, evaledArgs);
 };
 
 evaluators.list = (node, env) => {
@@ -115,15 +117,18 @@ evaluators.branch = (node, env, matchVal) => {
   case "bool":
   case "number":
   case "string":
+  case "nil":
     // xcxc NOTE_TO_SELF: check on this equality operator - need it to be deep
     if (evalDodo(pattern, env) !== matchVal) return fail;
     if (node.when && !evalDodo(node.when, env)) return fail;
     return { match: true, value: evalDodo(node.expr, env) };
   case "identifier":
-    return { match: true, value: evalDodo(node.expr, [env, {[pattern.name]: matchVal}]) };
+    const newEnv = [...env, {[pattern.name]: matchVal}];
+    if (node.when && !evalDodo(node.when, newEnv)) return fail;
+    return { match: true, value: evalDodo(node.expr, newEnv) };
   case "listPat":
+    // TODO start here???
   case "mapPat":
-  case "nil":
   default: throw new Error("pattern type unimplemented: " + pattern.type);
   };
 };
@@ -151,11 +156,13 @@ evaluators.number = (node, env) => node.value;
 evaluators.bool = (node, env) => node.value;
 evaluators.nil = (node, env) => null;
 
-evaluators.identifier = (node, env) => getEnvValue(node.name, env);
+evaluators.identifier = (node, env) => {
+  return getEnvValue(node.name, env);
+}
 
 evaluators.js = (node, env) => {
-  // this is the js eval function
   const fName = evalDodo(node.functionName, env);
+  // this is the js eval function
   const fn = eval(fName);
   const args = node.args.map(arg => evalDodo(arg, env));
   return fn.apply(null, args);
