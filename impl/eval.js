@@ -127,6 +127,13 @@ evaluators.branch = (node, env, matchVal) => {
     if (node.when && !evalDodo(node.when, newEnv)) return fail;
     return { match: true, value: evalDodo(node.expr, newEnv) };
   case "listPat":
+    if (!Array.isArray(matchVal)) return fail;
+    if (pattern.patterns.length !== matchVal.length) return fail;
+    // NOTE_TO_SELF: use deep equality
+    if (!pattern.patterns.every((elem, i) => evalDodo(elem, env) === matchVal[i])) return fail;
+    return { match: true, value: evalDodo(node.expr, env) };
+    // if (!pattern.every(elem => evaluators.branch(
+    // if (evalDodo(pattern, env) !== matchVal) return fail;
     // TODO start here???
   case "mapPat":
   default: throw new Error("pattern type unimplemented: " + pattern.type);

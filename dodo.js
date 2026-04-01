@@ -9,5 +9,5 @@ import fs from 'fs';
 const input = fs.readFileSync(process.stdin.fd, 'utf-8');
 const parsed = g.program(input);
 const syntaxTree = parsed.result;
-console.log("xcxc tree = ", JSON.stringify(syntaxTree));
+console.log(JSON.stringify(syntaxTree));
 console.log("xcxc value = ", evalDodo(syntaxTree));
