@@ -96,17 +96,6 @@
 (println (empty-check []))      ; empty
 (println (empty-check [1 2]))   ; non-empty
 
-
-(defn target-check (lst)
-  (match lst
-    ([1 2 3] "target")
-    (_  "non-target")))
-
-(println (target-check [1 2 3]))      ; target
-(println (target-check [1 4 3]))      ; non-target
-(println (target-check [1 2]))        ; non-target
-(println (target-check [1 2 3 4]))    ; non-target
-
 ; ── 8. Fixed-length list with variable bindings ──────────────────────────────
 
 (println "── 8. fixed-length list binding ──")
@@ -122,6 +111,18 @@
 
 (println "── 9. list with literal patterns ──")
 
+; Pure-literal list: tests that all elements must match and length must be exact
+(defn target-check (lst)
+  (match lst
+    ([1 2 3] "target")
+    (_       "non-target")))
+
+(println (target-check [1 2 3]))    ; target
+(println (target-check [1 4 3]))    ; non-target (wrong element)
+(println (target-check [1 2]))      ; non-target (too short)
+(println (target-check [1 2 3 4]))  ; non-target (too long)
+
+; Mixed literal/variable patterns
 (defn classify-point (pt)
   (match pt
     ([0 0] "origin")
