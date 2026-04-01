@@ -1,76 +1,232 @@
-; match.dodo — exercising pattern matching
+; match.dodo — progressive exercises for pattern matching
+;
+; Each section prints its own header, so you can see exactly how far
+; the implementation gets before hitting an error.
 
-; Literal patterns
-(defn describe (n)
+; ── 1. Literal: number ───────────────────────────────────────────────────────
+
+(println "── 1. literal number ──")
+
+(defn describe-num (n)
   (match n
-    (0     "zero")
-    (1     "one")
+    (0 "zero")
+    (1 "one")
+    (2 "two")
+    (_ "other")))
+
+(println (describe-num 0))   ; zero
+(println (describe-num 1))   ; one
+(println (describe-num 99))  ; other
+
+; ── 2. Literal: bool and nil ─────────────────────────────────────────────────
+
+(println "── 2. literal bool and nil ──")
+
+(defn describe-val (v)
+  (match v
     (true  "yes")
     (false "no")
-    (nil   "nothing")
-    (_     "something else")))
+    (nil   "nothing")))
 
-(println (describe 0))     ; zero
-(println (describe 1))     ; one
-(println (describe true))  ; yes
-(println (describe nil))   ; nothing
-(println (describe 42))    ; something else
+(println (describe-val true))   ; yes
+(println (describe-val false))  ; no
+(println (describe-val nil))    ; nothing
 
-; Guard clauses
+; ── 3. Literal: string ───────────────────────────────────────────────────────
+
+(println "── 3. literal string ──")
+
+(defn greet-lang (lang)
+  (match lang
+    ("en" "Hello")
+    ("es" "Hola")
+    ("fr" "Bonjour")
+    (_    "???")))
+
+(println (greet-lang "en"))  ; Hello
+(println (greet-lang "fr"))  ; Bonjour
+(println (greet-lang "de"))  ; ???
+
+; ── 4. Wildcard ──────────────────────────────────────────────────────────────
+
+(println "── 4. wildcard ──")
+
+(defn always-ok (x)
+  (match x
+    (_ "ok")))
+
+(println (always-ok 42))      ; ok
+(println (always-ok "hello")) ; ok
+(println (always-ok nil))     ; ok
+
+; ── 5. Variable binding ──────────────────────────────────────────────────────
+
+(println "── 5. variable binding ──")
+
+(defn echo (x)
+  (match x
+    (v (str "got: " (number->string v)))))
+
+(println (echo 7))   ; got: 7
+(println (echo -3))  ; got: -3
+
+; ── 6. Guards ────────────────────────────────────────────────────────────────
+
+(println "── 6. guards ──")
+
 (defn sign (n)
   (match n
     (x when (> x 0) "positive")
     (x when (< x 0) "negative")
     (_               "zero")))
 
-(println (sign 5))    ; positive
-(println (sign -3))   ; negative
-(println (sign 0))    ; zero
+(println (sign 5))   ; positive
+(println (sign -3))  ; negative
+(println (sign 0))   ; zero
 
-; List destructuring
-(defn sum (lst)
+; ── 7. Empty list ────────────────────────────────────────────────────────────
+
+(println "── 7. empty list ──")
+
+(defn empty-check (lst)
   (match lst
-    ([]         0)
-    ([x . rest] (+ x (sum rest)))))
+    ([] "empty")
+    (_  "non-empty")))
 
-(println (sum [1 2 3 4 5]))   ; 15
-(println (sum []))             ; 0
+(println (empty-check []))      ; empty
+(println (empty-check [1 2]))   ; non-empty
 
-; Nested list patterns
-(defn classify-point (point)
-  (match point
+; ── 8. Fixed-length list with variable bindings ──────────────────────────────
+
+(println "── 8. fixed-length list binding ──")
+
+(defn describe-pair (p)
+  (match p
+    ([a b] (str (number->string a) " and " (number->string b)))))
+
+(println (describe-pair [3 4]))    ; 3 and 4
+(println (describe-pair [10 20]))  ; 10 and 20
+
+; ── 9. List with literal patterns ────────────────────────────────────────────
+
+(println "── 9. list with literal patterns ──")
+
+(defn classify-point (pt)
+  (match pt
     ([0 0] "origin")
     ([x 0] (str "x-axis at " (number->string x)))
     ([0 y] (str "y-axis at " (number->string y)))
     ([x y] (str (number->string x) "," (number->string y)))))
 
-(println (classify-point [0 0]))   ; origin
-(println (classify-point [3 0]))   ; x-axis at 3
-(println (classify-point [0 4]))   ; y-axis at 4
-(println (classify-point [3 4]))   ; 3,4
+(println (classify-point [0 0]))  ; origin
+(println (classify-point [5 0]))  ; x-axis at 5
+(println (classify-point [0 3]))  ; y-axis at 3
+(println (classify-point [2 4]))  ; 2,4
 
-; Map destructuring
-(defn greet (person)
+; ── 10. Head/tail (rest) ─────────────────────────────────────────────────────
+
+(println "── 10. head/tail ──")
+
+(defn first-two (lst)
+  (match lst
+    ([]          "empty")
+    ([x]         (str "one: " (number->string x)))
+    ([x y . _]   (str "first two: " (number->string x) ", " (number->string y)))))
+
+(println (first-two []))        ; empty
+(println (first-two [9]))       ; one: 9
+(println (first-two [1 2 3]))   ; first two: 1, 2
+
+; ── 11. Recursive list traversal ─────────────────────────────────────────────
+
+(println "── 11. recursive list (sum) ──")
+
+(defn sum (lst)
+  (match lst
+    ([]         0)
+    ([x . rest] (+ x (sum rest)))))
+
+(println (number->string (sum [])))          ; 0
+(println (number->string (sum [1 2 3 4 5]))) ; 15
+
+; ── 12. Map destructuring ────────────────────────────────────────────────────
+
+(println "── 12. map destructuring ──")
+
+(defn greet-person (person)
+  (match person
+    ({"name": name} (str "Hello, " name "!"))))
+
+(println (greet-person {"name": "Alice"}))                  ; Hello, Alice!
+(println (greet-person {"name": "Bob", "age": 30}))         ; Hello, Bob!
+
+; ── 13. Map destructuring: multiple keys ─────────────────────────────────────
+
+(println "── 13. map: multiple keys ──")
+
+(defn intro (person)
   (match person
     ({"name": name, "age": age}
-      (str "Hello " name ", age " (number->string age)))))
+      (str name " is " (number->string age)))))
 
-(println (greet {"name": "Alice", "age": 30}))  ; Hello Alice, age 30
-(println (greet {"name": "Bob",   "age": 17}))  ; Hello Bob, age 17
+(println (intro {"name": "Charlie", "age": 25}))  ; Charlie is 25
+(println (intro {"name": "Diana", "age": 17, "city": "Portland"}))  ; Diana is 17
 
-; Map destructuring with rest
-(defn first-entry (m)
+; ── 14. Map destructuring with rest ──────────────────────────────────────────
+
+(println "── 14. map with rest ──")
+
+(defn name-and-extras (m)
   (match m
-    ({"name": name . _} (str "name is " name))))
+    ({"name": name . rest}
+      (str name " (extra keys: " (number->string (len (keys rest))) ")"))))
 
-(println (first-entry {"name": "Charlie", "age": 25, "city": "Portland"}))
-; name is Charlie
+(println (name-and-extras {"name": "Eve"}))                         ; Eve (extra keys: 0)
+(println (name-and-extras {"name": "Frank", "age": 40, "job": "dev"}))  ; Frank (extra keys: 2)
 
-; Wildcard
-(defn maybe-head (lst)
-  (match lst
-    ([]        nil)
-    ([x . _]   x)))
+; ── 15. Nested list patterns ─────────────────────────────────────────────────
 
-(println (maybe-head [42 1 2]))  ; 42
-(println (maybe-head []))        ; nil
+(println "── 15. nested list patterns ──")
+
+(defn matrix-cell (row col grid)
+  (match grid
+    ([[a _] [_ _]] when (and (= row 0) (= col 0)) a)
+    ([[_ b] [_ _]] when (and (= row 0) (= col 1)) b)
+    ([[_ _] [c _]] when (and (= row 1) (= col 0)) c)
+    ([[_ _] [_ d]] d)))
+
+(def grid [[1 2] [3 4]])
+(println (number->string (matrix-cell 0 0 grid)))  ; 1
+(println (number->string (matrix-cell 0 1 grid)))  ; 2
+(println (number->string (matrix-cell 1 0 grid)))  ; 3
+(println (number->string (matrix-cell 1 1 grid)))  ; 4
+
+; ── 16. Map nested in list ───────────────────────────────────────────────────
+
+(println "── 16. map nested in list ──")
+
+(defn first-name (people)
+  (match people
+    ([{"name": name} . _] name)
+    ([]                   "nobody")))
+
+(println (first-name [{"name": "Grace"} {"name": "Hank"}]))  ; Grace
+(println (first-name []))                                      ; nobody
+
+; ── 17. Guard after destructuring ────────────────────────────────────────────
+
+(println "── 17. guard after destructuring ──")
+
+(defn categorize (shape)
+  (match shape
+    ({"kind": "circle", "radius": r} when (> r 5)  "large circle")
+    ({"kind": "circle", "radius": r}                "small circle")
+    ({"kind": "rect",   "width": w, "height": h} when (= w h) "square")
+    ({"kind": "rect"}                                           "rectangle")))
+
+(println (categorize {"kind": "circle", "radius": 10}))          ; large circle
+(println (categorize {"kind": "circle", "radius": 2}))           ; small circle
+(println (categorize {"kind": "rect", "width": 4, "height": 4})) ; square
+(println (categorize {"kind": "rect", "width": 3, "height": 7})) ; rectangle
+
+(println "── done ──")
