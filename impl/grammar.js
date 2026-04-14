@@ -114,7 +114,7 @@ g.defn = rule('defn', () =>
 
 g.fn = rule('fn', () =>
   seq(tok('fn'), lit('('), many(g.identifier), lit(')'), g.expr),
-  ([fn, open, args, body]) => ({
+  ([fn, open, args, close, body]) => ({
     type: 'fn',
     args, body,
   }),
