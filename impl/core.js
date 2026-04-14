@@ -41,6 +41,17 @@ function isEqual(a, b) {
   }
 }
 
+function errorOut(s) {
+  throw new Error(s);
+}
+
+const typeMap = {
+  'boolean': 'bool',
+  'number': 'number',
+  'string': 'string',
+  'function': 'fn',
+};
+
 export const coreEnv = {
   // arithmetic
   '+': (...args) => args.reduce((a, b) => a + b, 0),
@@ -81,24 +92,23 @@ export const coreEnv = {
   'str-ends?': (s, end) => s.endsWith(end),
 
   // // list operations
-  // 'head': l => l[0] ?? throw new Error("head called on empty list"),
-  // 'tail': l => l.length > 0 ? l[,
-  // 'cons': asdf,
-  // 'concat': asdf,
-  // 'len': asdf,
-  // 'nth': asdf,
-  // 'empty?': asdf,
-  // 'map': asdf,
-  // 'filter': asdf,
-  // 'fold': asdf,
-  // 'flat-map': asdf,
-  // 'range': asdf,
-  // 'reverse': asdf,
-  // 'sort': asdf,
-  // 'sort-by': asdf,
-  // 'zip': asdf,
-  // 'enumerate': asdf,
-
+  'head': l => l[0] ?? errorOut("head called on empty list"),
+  'tail': l => l.length > 0 ? l.slice(1) : errorOut("tail called on empty list"),
+  'cons': (a, l) => [a, ...l],
+  'concat': (l1, l2) => [...l1, ...l2],
+  'len': l => l.length,
+  'nth': (l, n) => l[n],
+  'empty?': l => l.length === 0,
+  'map': (f, l) => l.map(f),
+  'filter': (f, l) => l.filter(elem => isTruthy(f(elem))),
+  'fold': (f, init, l) => l.reduce(f, init),
+  'flat-map': (f, l) => l.flatMap(f),
+  'range': (s, e) => Array.from({length: e - s}, (_, i) => s + i),
+  'reverse': l => l.toReversed(),
+  'sort': l => l.toSorted(),
+  'sort-by': (f, l) => l.toSorted((x, y) => (f(x) <= f(y) ? -1 : 1)),
+  'zip': (l1, l2) => l1.length === l2.length ? l1.map((e, i) => [e, l2[i]]) : errorOut("Lists to be zipped must have equal length"),
+  'enumerate': l => l.map((e, i) => [i, e]),
 
   // map operations
   get: (map, key) => map[key] ?? null, // null represents nil
@@ -118,16 +128,22 @@ export const coreEnv = {
   merge: (map1, map2) => ({...map1, ...map2}),
 
   // Type Checking and Conversion
-  // 'type': asdf,
-  // 'number?': asdf,
-  // 'string?': asdf,
-  // 'bool?': asdf,
-  // 'list?': asdf,
-  // 'map?': asdf,
-  // 'nil?': asdf,
-  // 'fn?': asdf,
+  'type': x => typeof x === 'object' ?
+    (x === null ? "nil" : (Array.isArray(x) ? "list" : "map"))
+    : typeMap[typeof x],
+  'number?': x => typeof x === "number",
+  'string?': x => typeof x === "string",
+  'bool?': x => typeof x === "boolean",
+  'list?': x => Array.isArray(x),
+  'map?': x => x !== null && typeof x === 'object' && !Array.isArray(x),
+  'nil?': x => x === null,
+  'fn?': x => typeof x === "function",
   'number->string': n => n.toString(),
-  // 'string->number': asdf,
+  'string->number': n => {
+    const res = Number(n);
+    if (isNaN(res)) errorOut(n + " is not a number");
+    return res;
+  },
 
   // I/O
   print: s => {

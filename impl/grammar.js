@@ -21,7 +21,7 @@ const emptyOpt = (optResult) => (optResult === []);
 const reserved = [
   'def', 'defn', 'fn', 'do', 'let', 'match', 'and', 'or', 'js',
   'js/import', 'js/method', 'js/get', 'true', 'false', 'nil',
-  'when', 'list', 'map'
+  'when'
 ];
 
 g.program = rule('program', () =>
