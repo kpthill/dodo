@@ -81,9 +81,10 @@ evaluators.fn = (node, env) => {
 };
 
 evaluators['do'] = (node, env) => {
+  const newEnv = [...env, {}];
   let retval = null;
   for (const expr of node.exprs) {
-    retval = evalDodo(expr, env);
+    retval = evalDodo(expr, newEnv);
   }
   return retval;
 };
@@ -91,7 +92,7 @@ evaluators['do'] = (node, env) => {
 evaluators['let'] = (node, env) => {
   const newEnv = [...env, {}];
   node.bindings.forEach(({id, value}) => {
-    newEnv[-1][id.name] = evalDodo(value, newEnv);
+    newEnv.at(-1)[id.name] = evalDodo(value, newEnv);
   });
   return evalDodo(node.expr, newEnv);
 };
