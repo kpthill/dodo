@@ -17,7 +17,18 @@
       padding: 16px;
       gap: 8px;
     }
-    h1 { color: #7ec8e3; font-size: 15px; font-weight: normal; }
+    h1 { color: #7ec8e3; font-size: 15px; font-weight: normal; display: inline; }
+    #toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    #toolbar a {
+      color: #7ec8e3;
+      text-decoration: none;
+      font-size: 12px;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      padding: 4px 10px;
+      background: #2a2a2a;
+    }
+    #toolbar a:hover { background: #333; }
     #output {
       flex: 1;
       overflow-y: auto;
@@ -61,7 +72,14 @@
   </style>
 </head>
 <body>
-  <h1>Dodo REPL</h1>
+  <div id="toolbar">
+    <h1>Dodo REPL</h1>
+    <a href="dodo-spec.md" target="_blank">spec ↗</a>
+    <button onclick="runExample('list')">list.dodo</button>
+    <button onclick="runExample('map')">map.dodo</button>
+    <button onclick="runExample('match')">match.dodo</button>
+    <button onclick="runExample('ffi')">ffi.dodo</button>
+  </div>
   <div id="output"></div>
   <div id="input-row">
     <span id="prompt">dodo&gt;</span>
@@ -706,12 +724,12 @@ function addLine(cls, text) {
   return div;
 }
 
-function evaluate(source) {
-  if (source.trim() === '/clear') { output.innerHTML = ''; return; }
+function evaluate(source, label) {
+  if (!label && source.trim() === '/clear') { output.innerHTML = ''; return; }
 
   const entry = document.createElement('div');
   entry.className = 'entry';
-  entry.appendChild(addLine('in', source));
+  entry.appendChild(addLine('in', label ?? source));
 
   try {
     const parsed = g.program(source);
@@ -725,13 +743,178 @@ function evaluate(source) {
     for (const line of _capturedPrintLines) {
       entry.appendChild(addLine('printed', line));
     }
-    entry.appendChild(addLine('out', displayValue(result)));
+    if (result !== null) entry.appendChild(addLine('out', displayValue(result)));
   } catch (e) {
     entry.appendChild(addLine('err', e.message));
   }
 
   output.appendChild(entry);
   output.scrollTop = output.scrollHeight;
+}
+
+const examples = {
+  list: `; list.dodo — exercising list operations
+
+; Basic access
+(println (head [1 2 3]))
+(println (tail [1 2 3]))
+(println (nth [10 20 30] 1))
+(println (len [1 2 3]))
+(println (empty? []))
+(println (empty? [1]))
+
+; Construction
+(println (cons 0 [1 2 3]))
+(println (concat [1 2] [3 4]))
+(println (reverse [1 2 3]))
+(println (range 0 5))
+
+; Higher-order
+(println (map (fn (x) (* x x)) [1 2 3 4 5]))
+(println (filter (fn (x) (> x 3)) [1 2 3 4 5]))
+(println (fold (fn (acc x) (+ acc x)) 0 [1 2 3 4 5]))
+
+; Sorting
+(println (sort [3 1 4 1 5 9 2 6]))
+(println (sort-by (fn (x) (nth x 1)) [["b" 2] ["a" 1] ["c" 3]]))
+
+; Zip and enumerate
+(println (zip [1 2 3] ["a" "b" "c"]))
+(println (enumerate ["x" "y" "z"]))
+
+; Recursive sum using fold
+(def total (fold (fn (acc x) (+ acc x)) 0 (range 1 11)))
+(println total)`,
+
+  map: `; map.dodo — exercising map operations
+
+(def m {"a": 1, "b": 2, "c": 3})
+
+; Basic access
+(println (get m "a"))
+(println (get m "z"))
+(println (get-or m "z" 99))
+(println (has? m "b"))
+(println (has? m "z"))
+
+; Keys, vals, entries
+(println (keys m))
+(println (vals m))
+(println (entries m))
+
+; Functional updates
+(def m2 (put m "d" 4))
+(println (get m2 "d"))
+(println (get m  "d"))
+
+(def m3 (remove m "b"))
+(println (has? m3 "b"))
+(println (has? m  "b"))
+
+; Merge
+(def merged (merge {"x": 1, "y": 2} {"y": 99, "z": 3}))
+(println (get merged "x"))
+(println (get merged "y"))
+(println (get merged "z"))
+
+; Building a map from a list using fold
+(def index
+  (fold (fn (acc entry)
+          (put acc (nth entry 0) (nth entry 1)))
+        {}
+        [["one" 1] ["two" 2] ["three" 3]]))
+(println (get index "two"))`,
+
+  match: `; match.dodo — pattern matching exercises
+
+(println "── 1. literal number ──")
+(defn describe-num (n)
+  (match n (0 "zero") (1 "one") (2 "two") (_ "other")))
+(println (describe-num 0))
+(println (describe-num 1))
+(println (describe-num 99))
+
+(println "── 2. literal bool and nil ──")
+(defn describe-val (v)
+  (match v (true "yes") (false "no") (nil "nothing")))
+(println (describe-val true))
+(println (describe-val false))
+(println (describe-val nil))
+
+(println "── 3. literal string ──")
+(defn greet-lang (lang)
+  (match lang ("en" "Hello") ("es" "Hola") ("fr" "Bonjour") (_ "???")))
+(println (greet-lang "en"))
+(println (greet-lang "fr"))
+(println (greet-lang "de"))
+
+(println "── 4. wildcard ──")
+(defn always-ok (x) (match x (_ "ok")))
+(println (always-ok 42))
+(println (always-ok "hello"))
+(println (always-ok nil))
+
+(println "── 5. variable binding ──")
+(defn echo (x) (match x (v (str "got: " (number->string v)))))
+(println (echo 7))
+(println (echo -3))
+
+(println "── 6. guards ──")
+(defn sign (n)
+  (match n
+    (x when (> x 0) "positive")
+    (x when (< x 0) "negative")
+    (_ "zero")))
+(println (sign 5))
+(println (sign -3))
+(println (sign 0))
+
+(println "── 7. empty list ──")
+(defn empty-check (lst)
+  (match lst ([] "empty") (_ "non-empty")))
+(println (empty-check []))
+(println (empty-check [1 2]))
+
+(println "── 8. fixed-length list binding ──")
+(defn describe-pair (p)
+  (match p ([a b] (str (number->string a) " and " (number->string b)))))
+(println (describe-pair [3 4]))
+(println (describe-pair [10 20]))
+
+(println "── 9. list with literal patterns ──")
+(defn target-check (lst)
+  (match lst ([1 2 3] "target") (_ "non-target")))
+(println (target-check [1 2 3]))
+(println (target-check [1 4 3]))
+(println (target-check [1 2]))
+(println (target-check [1 2 3 4]))`,
+
+  ffi: `; ffi.dodo — JavaScript FFI
+
+(println (js "Math.sqrt" 144))
+(println (js "Math.pow" 2 10))
+(println (js "Math.abs" -42))
+(println (js "Math.max" 3 7 2 9 1))
+
+(println (js "JSON.stringify" {"x": 1, "y": 2}))
+
+(def parsed (js "JSON.parse" "{\"name\":\"dodo\",\"version\":1}"))
+(println (js/get parsed "name"))
+(println (js/get parsed "version"))
+
+(def pi (js/get "Math" "PI"))
+(println pi)
+
+(println (js/get "Number" "MAX_SAFE_INTEGER"))
+
+(def randoms
+  (map (fn (_) (js "Math.floor" (* (js "Math.random") 100)))
+       (range 0 5)))
+(println randoms)`,
+};
+
+function runExample(name) {
+  evaluate(examples[name], name + '.dodo');
 }
 
 // Input history
