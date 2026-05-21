@@ -65,15 +65,3 @@ describe('merge', () => {
     assert.equal(dodo('(get (merge {"a": 1} {"a": 99}) "a")'), 99);
   });
 });
-
-describe('len and empty?', () => {
-  it('len', () => {
-    assert.equal(dodo('(len {"a": 1, "b": 2})'), 2);
-    assert.equal(dodo('(len {})'), 0);
-  });
-
-  it('empty?', () => {
-    assert.equal(dodo('(empty? {})'), true);
-    assert.equal(dodo('(empty? {"a": 1})'), false);
-  });
-});

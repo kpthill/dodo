@@ -78,11 +78,11 @@ export const coreEnv = {
   not: b => !isTruthy(b),
 
   // string operations
-  'str': (...args) => args.join(""),
+  'str': (...args) => args.map(x => x ?? 'nil').join(""),
   'str-len': s => s.length,
   'str-slice': (s, start, end) => s.slice(start, end),
-  'str-index': (s, i) => (Number.isInteger(i) && i >=0 && i < s.length) ? s.charAt(i) : -1,
-  'str-split': (s, substring) => s.split(s, substring),
+  'str-index': (s, substring) => s.indexOf(substring),
+  'str-split': (s, substring) => s.split(substring),
   'str-join': (strings, joiner) => strings.join(joiner),
   'str-upper': s => s.toUpperCase(),
   'str-lower': s => s.toLowerCase(),
@@ -119,7 +119,7 @@ export const coreEnv = {
   }),
   remove: (map, key, def) => {
     const { [key]: deleted, ...rest } = map;
-    return map;
+    return rest;
   },
   keys: (map) => Object.keys(map),
   vals: (map) => Object.values(map),
