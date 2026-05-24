@@ -29,6 +29,18 @@
       background: #2a2a2a;
     }
     #toolbar a:hover { background: #333; }
+    #example-select {
+      background: #2a2a2a;
+      color: #aaa;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+    }
+    #example-select:hover { background: #333; }
     #output {
       flex: 1;
       overflow-y: auto;
@@ -74,11 +86,14 @@
 <body>
   <div id="toolbar">
     <h1>Dodo REPL</h1>
-    <a href="dodo-spec.md" target="_blank">spec ↗</a>
-    <button onclick="runExample('list')">list.dodo</button>
-    <button onclick="runExample('map')">map.dodo</button>
-    <button onclick="runExample('match')">match.dodo</button>
-    <button onclick="runExample('ffi')">ffi.dodo</button>
+    <a href="spec.html" target="_blank">spec ↗</a>
+    <select id="example-select" onchange="if(this.value){runExample(this.value);this.value=''}">
+      <option value="">examples…</option>
+      <option value="list">list.dodo</option>
+      <option value="map">map.dodo</option>
+      <option value="match">match.dodo</option>
+      <option value="ffi">ffi.dodo</option>
+    </select>
   </div>
   <div id="output"></div>
   <div id="input-row">
