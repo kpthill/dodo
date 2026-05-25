@@ -87,7 +87,7 @@
   <div id="toolbar">
     <h1>Dodo REPL</h1>
     <a href="spec.html" target="_blank">spec ↗</a>
-    <select id="example-select" onchange="if(this.value){runExample(this.value);this.value=''}">
+    <select id="example-select">
       <option value="">examples…</option>
       <option value="list">list.dodo</option>
       <option value="map">map.dodo</option>
@@ -964,6 +964,10 @@ input.addEventListener('keydown', e => {
 
 document.getElementById('clear-btn').addEventListener('click', () => {
   output.innerHTML = '';
+});
+
+document.getElementById('example-select').addEventListener('change', function() {
+  if (this.value) { runExample(this.value); this.value = ''; }
 });
 
 // Welcome message
