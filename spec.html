@@ -988,14 +988,16 @@ notation with explicit parentheses.
 
       // Paragraph — collect until blank line or block-level element
       let para = '';
+      const paraStart = i;
       while (i < lines.length) {
         const l = lines[i];
         if (l.trim() === '') break;
-        if (l.match(/^[#|`]/) || l.match(/^- /) || /^---+\s*$/.test(l)) break;
+        if (l.match(/^#{1,4}\s/) || l.startsWith('|') || l.match(/^```/) || l.match(/^- /) || /^---+\s*$/.test(l)) break;
         para += (para ? ' ' : '') + l.trim();
         i++;
       }
       if (para) html += `<p>${inlineRender(para)}</p>\n`;
+      if (i === paraStart) i++; // safety: never stall on an unrecognized line
     }
 
     return html;
