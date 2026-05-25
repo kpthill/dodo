@@ -56,8 +56,8 @@
     .printed { color: #aaa; padding-left: 16px; }
     .printed::before { content: '> '; }
     .err { color: #e07070; padding-left: 16px; }
-    #input-row { display: flex; align-items: center; gap: 8px; }
-    #prompt { color: #7ec8e3; white-space: nowrap; }
+    #input-row { display: flex; align-items: flex-end; gap: 8px; }
+    #prompt { color: #7ec8e3; white-space: nowrap; padding-bottom: 7px; }
     #input {
       flex: 1;
       background: #111;
@@ -68,6 +68,10 @@
       font-family: inherit;
       font-size: inherit;
       outline: none;
+      resize: none;
+      overflow-y: hidden;
+      min-height: 32px;
+      line-height: 1.5;
     }
     #input:focus { border-color: #7ec8e3; }
     button {
@@ -98,7 +102,7 @@
   <div id="output"></div>
   <div id="input-row">
     <span id="prompt">dodo&gt;</span>
-    <input id="input" type="text" autofocus autocomplete="off" spellcheck="false" placeholder="type an expression…">
+    <textarea id="input" rows="1" autofocus autocomplete="off" spellcheck="false" placeholder="type an expression… (Ctrl+Enter to run)"></textarea>
     <button id="clear-btn">clear</button>
   </div>
 
@@ -928,37 +932,33 @@ const examples = {
 (println randoms)`,
 };
 
-function runExample(name) {
-  evaluate(examples[name], name + '.dodo');
+function autoResize() {
+  input.style.height = 'auto';
+  input.style.height = input.scrollHeight + 'px';
 }
 
-// Input history
-const history = [];
-let histIdx = -1;
+function submitInput() {
+  const src = input.value.trim();
+  if (!src) return;
+  input.value = '';
+  autoResize();
+  evaluate(src);
+}
+
+function loadExample(name) {
+  input.value = examples[name];
+  autoResize();
+  input.focus();
+  // scroll to bottom so the prompt is visible
+  input.setSelectionRange(0, 0);
+}
+
+input.addEventListener('input', autoResize);
 
 input.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const src = input.value.trim();
-    if (!src) return;
-    history.unshift(src);
-    histIdx = -1;
-    input.value = '';
-    evaluate(src);
-  } else if (e.key === 'ArrowUp') {
-    if (histIdx + 1 < history.length) {
-      histIdx++;
-      input.value = history[histIdx];
-      e.preventDefault();
-    }
-  } else if (e.key === 'ArrowDown') {
-    if (histIdx > 0) {
-      histIdx--;
-      input.value = history[histIdx];
-    } else {
-      histIdx = -1;
-      input.value = '';
-    }
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
     e.preventDefault();
+    submitInput();
   }
 });
 
@@ -967,7 +967,7 @@ document.getElementById('clear-btn').addEventListener('click', () => {
 });
 
 document.getElementById('example-select').addEventListener('change', function() {
-  if (this.value) { runExample(this.value); this.value = ''; }
+  if (this.value) { loadExample(this.value); this.value = ''; }
 });
 
 // Welcome message
@@ -975,7 +975,7 @@ document.getElementById('example-select').addEventListener('change', function() 
   const div = document.createElement('div');
   div.style.color = '#555';
   div.style.marginBottom = '8px';
-  div.textContent = 'Dodo REPL — type an expression and press Enter. /clear to reset.';
+  div.textContent = 'Dodo REPL — Ctrl+Enter to run. /clear to reset.';
   output.appendChild(div);
 }
 
