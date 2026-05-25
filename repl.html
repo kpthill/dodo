@@ -913,7 +913,7 @@ const examples = {
 
 (println (js "JSON.stringify" {"x": 1, "y": 2}))
 
-(def parsed (js "JSON.parse" "{\"name\":\"dodo\",\"version\":1}"))
+(def parsed (js "JSON.parse" "{\\"name\\":\\"dodo\\",\\"version\\":1}"))
 (println (js/get parsed "name"))
 (println (js/get parsed "version"))
 
