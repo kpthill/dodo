@@ -141,6 +141,23 @@ evaluators.branch = (node, env, matchVal) => {
   };
 };
 
+const deepMatch = (node, env, matchVal) => {
+  const fail = { match: false };
+  pattern = node.pattern;
+
+  switch (pattern.type) {
+  case "listPat":
+    const res = patterns.map((pattern, i) => deepmatch(pattern, env, matchVal[i]));
+    patterns.reduce((status, pattern, i) => {
+      if (!status.match) return status;
+      const update = deepMatch(pattern, status.env, matchVal[i]);
+      if (!update.match) return evaluators;
+      // merge top of env? what if a var appears twice in the pattern?
+      // res is match and new
+    });
+  }
+};
+
 evaluators.and = (node, env) => {
   let lastVal = true;
   for (const expr of node.exprs) {
