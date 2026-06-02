@@ -51,3 +51,17 @@ Code internal task list for Patrick's todos.
 - Only include `Co-Authored-By: Claude` in commits where Claude actually
   authored or co-authored the changes. Patrick's own code (e.g. dodo.js)
   should be committed by Patrick without the co-author tag.
+
+## Do Not Commit Patrick's Implementation Code
+
+**Agents must never run `git commit` (or `git add`) on interpreter
+implementation files.** This includes anything under `impl/` and any
+top-level interpreter entry points (e.g. `dodo.js`). The goal is a clean git
+history where Patrick's own work is committed by Patrick, and agent-authored
+work (tests, spec, frontend, harness) is committed by the agent with a
+`Co-Authored-By: Claude` tag.
+
+If Patrick asks an agent to commit a file that falls in the implementation
+category, the agent should decline and remind him to commit it himself.
+Non-implementation files (spec, tests, REPL/frontend, AGENTS.md, todo.md)
+are fine for agents to commit as usual.
