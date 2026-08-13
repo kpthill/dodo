@@ -8,8 +8,8 @@
 ## Pattern Matching
 - [x] Fix guard clause scoping (pattern bindings must be in scope when guard is evaluated)
 - [x] Implement `nil` pattern
-- [ ] Implement list pattern destructuring (`[a b . rest]`)
-- [ ] Implement map pattern destructuring (`{"x": vx}`)
+- [x] Implement list pattern destructuring (`[a b . rest]`)
+- [x] Implement map pattern destructuring (`{"x": vx}`)
 
 ## Built-ins
 - [x] Fix `+` (missing return statement)

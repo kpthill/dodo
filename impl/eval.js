@@ -97,9 +97,15 @@ evaluators['let'] = (node, env) => {
   return evalDodo(node.expr, newEnv);
 };
 
+const isHash = (obj) => {
+  return typeof obj === 'object' && obj !== null && obj.constructor === Object;
+};
+
 const matchPattern = (pattern, env, matchVal) => {
   const fail = { match: false };
   const succeed = { match: true };
+
+  let newVars = {};
 
   switch (pattern.type) {
   case "patternDefault": return succeed;
@@ -114,25 +120,47 @@ const matchPattern = (pattern, env, matchVal) => {
     if (!Array.isArray(matchVal)) return fail;
     if (pattern.patterns.length > matchVal.length) return fail;
 
-    let newVars = {};
-
     if (!pattern.rest && pattern.patterns.length !== matchVal.length) return fail;
 
     if (pattern.rest?.type === "identifier") {
       newVars = { ...newVars, [pattern.rest.name]: matchVal.slice(pattern.patterns.length) };
     }
 
-    const matches = pattern.patterns.map((pattern, i) =>
+    const listMatches = pattern.patterns.map((pattern, i) =>
       matchPattern(pattern, env, matchVal[i]));
-    if (!matches.every(({match}) => match)) return fail;
+    if (!listMatches.every(({match}) => match)) return fail;
 
-    newVars = matches.reduce(
+    newVars = listMatches.reduce(
       (acc, match) => ({ ...acc, ...(match.newVars ?? {})}),
       newVars
     );
 
     return { ...succeed, newVars};
   case "mapPat":
+    if (!isHash(matchVal)) return fail;
+
+    if (pattern.rest?.type === "identifier") {
+      const remainders = Object.fromEntries(
+        Object.entries(matchVal)
+          .filter(([key, _value]) => !pattern.entries.some(({ key: pKey }) => {
+            return pKey.value === key;
+          }
+          ))
+      );
+      newVars = { ...newVars, [pattern.rest.name]: remainders };
+    }
+
+    const mapMatches = pattern.entries.map(({ key, value }) => matchPattern(value, env, matchVal[key.value]));
+
+    if (mapMatches.some(({ match }) => !match)) return fail;
+
+    return ({
+      ...succeed,
+      newVars: mapMatches.reduce(
+        (acc, match) => ({ ...acc, ...(match.newVars ?? {})}),
+        newVars
+      ),
+    });
   default: throw new Error("pattern type unimplemented: " + pattern.type);
   };
 };
