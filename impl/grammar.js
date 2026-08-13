@@ -233,20 +233,20 @@ g.patternDefault = rule("patternDefault", () =>
 );
 
 g.listPat = rule('listPat', () =>
-  seq(lit('['), many(g.pattern), opt(seq(lit('.'), g.identifier)), lit(']')),
-  ([_1, patterns, id_pattern, _2]) => {
-    if (emptyOpt(id_pattern)) return { type: 'listPat', patterns };
-    const [_, id] = id_pattern;
-    return { type: 'listPat', patterns, identifier: id };
+  seq(lit('['), many(g.pattern), opt(seq(lit('.'), or(g.patternDefault, g.identifier))), lit(']')),
+  ([_open, patterns, rest_pattern, _close]) => {
+    if (emptyOpt(rest_pattern)) return { type: 'listPat', patterns };
+    const [_, rest] = rest_pattern;
+    return { type: 'listPat', patterns, rest };
   }
 );
 
 g.mapPat = rule('mapPat', () =>
   seq(lit('{'), many(g.mapEntry), opt(seq(lit('.'), g.identifier)), lit('}')),
-  ([open, entries, id_pattern, close]) => {
+  ([_open, entries, id_pattern, _close]) => {
     if (emptyOpt(id_pattern)) return { type: 'mapPat', entries };
     const [_, id] = id_pattern;
-    return { type: 'mapPat', entries, identifier: id };
+    return { type: 'mapPat', entries, rest: id };
   },
 );
 

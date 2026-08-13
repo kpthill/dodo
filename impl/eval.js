@@ -8,7 +8,7 @@ const evaluators = {};
 // to innermost. Shadowing is allowed, so to look up a name in the environment,
 // we check each map in reverse order (innermost to outermost).
 const getEnvValue = (name, env) => {
-  for (var i = env.length - 1; i >= 0; i--) {
+  for (let i = env.length - 1; i >= 0; i--) {
     if (env[i].hasOwnProperty(name)) return env[i][name];
   }
   throw new Error("Value not found in env: " + name);
@@ -29,7 +29,7 @@ function isTruthy(val) {
 function makeLambda(args, body, env) {
   return (...innerArgs) => {
     const newBindings = {};
-    for (var i = 0; i < args.length; i++) {
+    for (let i = 0; i < args.length; i++) {
       newBindings[args[i].name] = innerArgs[i];
     }
 
@@ -97,6 +97,60 @@ evaluators['let'] = (node, env) => {
   return evalDodo(node.expr, newEnv);
 };
 
+const matchPattern = (pattern, env, matchVal) => {
+  const fail = { match: false };
+  const succeed = { match: true };
+
+  switch (pattern.type) {
+  case "patternDefault": return succeed;
+  case "bool":
+  case "number":
+  case "string":
+  case "nil":
+    return { match: (evalDodo(pattern, env) === matchVal) };
+  case "identifier":
+    return { ...succeed, newVars: {[pattern.name]: matchVal} };
+  case "listPat":
+    if (!Array.isArray(matchVal)) return fail;
+    if (pattern.patterns.length > matchVal.length) return fail;
+
+    let newVars = {};
+
+    if (!pattern.rest && pattern.patterns.length !== matchVal.length) return fail;
+
+    if (pattern.rest?.type === "identifier") {
+      newVars = { ...newVars, [pattern.rest.name]: matchVal.slice(pattern.patterns.length) };
+    }
+
+    const matches = pattern.patterns.map((pattern, i) =>
+      matchPattern(pattern, env, matchVal[i]));
+    if (!matches.every(({match}) => match)) return fail;
+
+    newVars = matches.reduce(
+      (acc, match) => ({ ...acc, ...(match.newVars ?? {})}),
+      newVars
+    );
+
+    return { ...succeed, newVars};
+  case "mapPat":
+  default: throw new Error("pattern type unimplemented: " + pattern.type);
+  };
+};
+
+evaluators.branch = (node, env, matchVal) => {
+  const fail = { match: false };
+  const succeed = { match: true };
+
+  const patternResult = matchPattern(node.pattern, env, matchVal);
+
+  if (!patternResult.match) return fail;
+
+  const newEnv = [...env, patternResult.newVars ?? {}];
+
+  if (node.when && !evalDodo(node.when, newEnv)) return fail;
+  return { ...succeed, value: evalDodo(node.expr, newEnv) };
+};
+
 evaluators.match = (node, env) => {
   const matchVal = evalDodo(node.expr, env);
   for (const branch of node.branches) {
@@ -105,57 +159,6 @@ evaluators.match = (node, env) => {
   }
 
   throw new Error("No Match Found");
-};
-
-evaluators.branch = (node, env, matchVal) => {
-  const fail = { match: false };
-  const pattern = node.pattern;
-
-  switch (pattern.type) {
-  case "patternDefault":
-    if (node.when && !evalDodo(node.when, env)) return fail;
-    return { match: true, value: evalDodo(node.expr, env) };
-  case "bool":
-  case "number":
-  case "string":
-  case "nil":
-    // xcxc NOTE_TO_SELF: check on this equality operator - need it to be deep
-    if (evalDodo(pattern, env) !== matchVal) return fail;
-    if (node.when && !evalDodo(node.when, env)) return fail;
-    return { match: true, value: evalDodo(node.expr, env) };
-  case "identifier":
-    const newEnv = [...env, {[pattern.name]: matchVal}];
-    if (node.when && !evalDodo(node.when, newEnv)) return fail;
-    return { match: true, value: evalDodo(node.expr, newEnv) };
-  case "listPat":
-    if (!Array.isArray(matchVal)) return fail;
-    if (pattern.patterns.length !== matchVal.length) return fail;
-    // NOTE_TO_SELF: use deep equality
-    if (!pattern.patterns.every((elem, i) => evalDodo(elem, env) === matchVal[i])) return fail;
-    return { match: true, value: evalDodo(node.expr, env) };
-    // if (!pattern.every(elem => evaluators.branch(
-    // if (evalDodo(pattern, env) !== matchVal) return fail;
-    // TODO start here???
-  case "mapPat":
-  default: throw new Error("pattern type unimplemented: " + pattern.type);
-  };
-};
-
-const deepMatch = (node, env, matchVal) => {
-  const fail = { match: false };
-  pattern = node.pattern;
-
-  switch (pattern.type) {
-  case "listPat":
-    const res = patterns.map((pattern, i) => deepMatch(pattern, env, matchVal[i]));
-    patterns.reduce((status, pattern, i) => {
-      if (!status.match) return status;
-      const update = deepMatch(pattern, status.env, matchVal[i]);
-      if (!update.match) return evaluators;
-      // merge top of env? what if a var appears twice in the pattern?
-      // res is match and new
-    });
-  }
 };
 
 evaluators.and = (node, env) => {
