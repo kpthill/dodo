@@ -1,6 +1,6 @@
 # Dodo Language Specification
 
-**Version:** 0.2.5 (Draft)
+**Version:** 0.2.6 (Draft)
 
 Dodo is a small, purely functional, expression-based programming language
 with Lisp-style syntax. It is designed to be implementable in a weekend as a
@@ -598,8 +598,11 @@ The following conditions produce runtime errors:
 - Arity mismatch (wrong number of arguments)
 - Non-exhaustive match (no pattern matches)
 - Index out of bounds (`nth`, `str-slice`)
-- Division by zero
 - FFI errors (JS exceptions are re-raised as Dodo errors)
+
+Division by zero is **not** an error: per IEEE 754 semantics (§6.1),
+`(/ 1 0)` evaluates to `Infinity`, `(/ -1 0)` to `-Infinity`, and
+`(/ 0 0)` to `NaN`.
 
 **Design note:** For a v0.2, you might add a
 `(try expr (catch e handler))` form, but it's fine to skip for a weekend

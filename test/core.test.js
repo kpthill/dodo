@@ -55,6 +55,11 @@ describe('fn and defn', () => {
     `), 15);
   });
 
+  it('arity mismatch errors', () => {
+    assert.throws(() => dodo('((fn (x y) (+ x y)) 1)'));
+    assert.throws(() => dodo('((fn (x) x) 1 2)'));
+  });
+
   it('functions can be recursive', () => {
     assert.equal(dodo(`
       (defn fib (n)
@@ -144,6 +149,16 @@ describe('arithmetic', () => {
   it('/', () => {
     assert.equal(dodo('(/ 10 4)'), 2.5);
     assert.equal(dodo('(/ 9 3)'), 3);
+  });
+
+  it('/ by zero follows IEEE 754', () => {
+    assert.equal(dodo('(/ 1 0)'), Infinity);
+    assert.equal(dodo('(/ -1 0)'), -Infinity);
+    assert.equal(dodo('(/ 0 0)'), NaN);
+  });
+
+  it('type mismatch errors', () => {
+    assert.throws(() => dodo('(+ 1 "x")'));
   });
 
   it('%', () => {

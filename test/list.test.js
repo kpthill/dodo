@@ -7,6 +7,10 @@ describe('basic access', () => {
     assert.equal(dodo('(head [1 2 3])'), 1);
   });
 
+  it('head when first element is nil', () => {
+    assert.equal(dodo('(head [nil 1])'), null);
+  });
+
   it('tail', () => {
     assert.deepEqual(dodo('(tail [1 2 3])'), [2, 3]);
   });
@@ -17,14 +21,32 @@ describe('basic access', () => {
     assert.equal(dodo('(nth [10 20 30] 2)'), 30);
   });
 
+  it('nth out of bounds errors', () => {
+    assert.throws(() => dodo('(nth [10 20 30] 3)'));
+    assert.throws(() => dodo('(nth [] 0)'));
+  });
+
   it('len', () => {
     assert.equal(dodo('(len [1 2 3])'), 3);
     assert.equal(dodo('(len [])'), 0);
   });
 
+  it('len also works on strings and maps', () => {
+    assert.equal(dodo('(len "hello")'), 5);
+    assert.equal(dodo('(len {"a": 1, "b": 2})'), 2);
+    assert.equal(dodo('(len {})'), 0);
+  });
+
   it('empty?', () => {
     assert.equal(dodo('(empty? [])'), true);
     assert.equal(dodo('(empty? [1])'), false);
+  });
+
+  it('empty? also works on strings and maps', () => {
+    assert.equal(dodo('(empty? "")'), true);
+    assert.equal(dodo('(empty? "x")'), false);
+    assert.equal(dodo('(empty? {})'), true);
+    assert.equal(dodo('(empty? {"a": 1})'), false);
   });
 });
 
@@ -76,6 +98,10 @@ describe('higher-order', () => {
 describe('sorting', () => {
   it('sort numbers', () => {
     assert.deepEqual(dodo('(sort [3 1 4 1 5 9 2 6])'), [1, 1, 2, 3, 4, 5, 6, 9]);
+  });
+
+  it('sort numbers uses numeric ordering, not lexicographic', () => {
+    assert.deepEqual(dodo('(sort [10 2 1])'), [1, 2, 10]);
   });
 
   it('sort strings', () => {

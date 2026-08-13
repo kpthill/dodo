@@ -62,6 +62,14 @@ describe('guard clauses', () => {
     `), 'negative');
   });
 
+  it('guard uses Dodo truthiness — 0 is truthy', () => {
+    assert.equal(dodo(`
+      (match 5
+        (x when 0 "matched")
+        (_ "fell-through"))
+    `), 'matched');
+  });
+
   it('wildcard with guard', () => {
     assert.equal(dodo(`
       (match 0
