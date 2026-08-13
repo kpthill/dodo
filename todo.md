@@ -6,8 +6,8 @@
 - [x] Implement `and` / `or` (short-circuit)
 
 ## Pattern Matching
-- [ ] Fix guard clause scoping (pattern bindings must be in scope when guard is evaluated)
-- [ ] Implement `nil` pattern
+- [x] Fix guard clause scoping (pattern bindings must be in scope when guard is evaluated)
+- [x] Implement `nil` pattern
 - [ ] Implement list pattern destructuring (`[a b . rest]`)
 - [ ] Implement map pattern destructuring (`{"x": vx}`)
 

@@ -147,7 +147,7 @@ const deepMatch = (node, env, matchVal) => {
 
   switch (pattern.type) {
   case "listPat":
-    const res = patterns.map((pattern, i) => deepmatch(pattern, env, matchVal[i]));
+    const res = patterns.map((pattern, i) => deepMatch(pattern, env, matchVal[i]));
     patterns.reduce((status, pattern, i) => {
       if (!status.match) return status;
       const update = deepMatch(pattern, status.env, matchVal[i]);
