@@ -18,7 +18,7 @@
 - [x] Logic: `not`, `print`
 - [x] List: `head`, `tail`, `cons`, `concat`, `len`, `nth`, `empty?`, `map`, `filter`, `fold`, `flat-map`, `range`, `reverse`, `sort`, `sort-by`, `zip`, `enumerate`
 - [x] Map: `get`, `get-or`, `put`, `remove`, `keys`, `vals`, `entries`, `has?`, `merge`
-- [x] String: `str`, `str-len`, `str-slice`, `str-index`, `str-split`, `str-join`, `str-upper`, `str-lower`, `str-trim`, `str-contains?`, `str-starts?`, `str-ends?`
+- [x] String: `str`, `str-slice`, `str-index`, `str-split`, `str-join`, `str-upper`, `str-lower`, `str-trim`, `str-contains?`, `str-starts?`, `str-ends?`
 - [x] Type: `type`, `number?`, `string?`, `bool?`, `list?`, `map?`, `nil?`, `fn?`, `number->string`, `string->number`
 
 ## Spec-Compliance Bugs (failing tests exist for each)
@@ -26,8 +26,8 @@
 - [x] `sort` on numbers is lexicographic (`(sort [10 2 1])` → `[1 10 2]`);
       spec says natural ordering
 - [ ] `head` errors when the first element is `nil` (`??` treats it as missing)
-- [ ] Implement `str-empty?`, `map-len`, `map-empty?` (spec 0.2.7 made
-      `len` / `empty?` lists-only instead of polymorphic)
+- [ ] Make `len` / `empty?` polymorphic over lists, strings, and maps, and
+      remove `str-len` (spec 0.2.8 reversed 0.2.7's lists-only decision)
 - [ ] Match guards use JS truthiness instead of Dodo truthiness
       (guard result `0` should count as truthy)
 - [ ] `nth` out of bounds returns `undefined` instead of erroring (spec §10)

@@ -18,17 +18,17 @@ describe('str', () => {
   });
 });
 
-describe('str-len', () => {
+describe('len on strings', () => {
   it('returns length', () => {
-    assert.equal(dodo('(str-len "hello")'), 5);
-    assert.equal(dodo('(str-len "")'), 0);
+    assert.equal(dodo('(len "hello")'), 5);
+    assert.equal(dodo('(len "")'), 0);
   });
 });
 
-describe('str-empty?', () => {
+describe('empty? on strings', () => {
   it('true only for the empty string', () => {
-    assert.equal(dodo('(str-empty? "")'), true);
-    assert.equal(dodo('(str-empty? "x")'), false);
+    assert.equal(dodo('(empty? "")'), true);
+    assert.equal(dodo('(empty? "x")'), false);
   });
 });
 

@@ -134,7 +134,7 @@
   <script id="src" type="text/plain">
 # Dodo Language Specification
 
-**Version:** 0.2.5 (Draft)
+**Version:** 0.2.8 (Draft)
 
 Dodo is a small, purely functional, expression-based programming language
 with Lisp-style syntax. It is designed to be implementable in a weekend as a
@@ -163,7 +163,7 @@ Dodo is dynamically typed. Values carry their type at runtime.
 |----------|--------------------------------|------------------------------------------|
 | `number` | `0`, `42`, `-7`, `3.14`        | JS number (IEEE 754 double)              |
 | `bool`   | `true`, `false`                |                                          |
-| `string` | `"hello"`, `"it's \"fine\""` | Double-quoted, backslash escapes         |
+| `string` | `"hello"`, `"it's \"fine\""`   | Double-quoted, backslash escapes         |
 | `list`   | `[1 2 3]`                      | Heterogeneous, immutable                 |
 | `map`    | `{"a": 1, "b": 2}`             | Key-value pairs, keys can be any type    |
 | `nil`    | `nil`                          | The unit/nothing value                   |
@@ -522,10 +522,11 @@ numbers and strings (lexicographic).
 
 | Function        | Example                                    | Notes                          |
 |-----------------|--------------------------------------------|--------------------------------|
-| `str`           | `(str "hi" " " "there")` → `"hi there"`   | Concatenation; coerces nil     |
-| `str-len`       | `(str-len "hello")` → `5`                  |                                |
-| `str-slice`     | `(str-slice "hello" 1 3)` → `"el"`         | Start inclusive, end exclusive |
-| `str-index`     | `(str-index "hello" 1)` → `"e"`            | Returns -1 if out of range     |
+| `str`           | `(str "hi" " " "there")` → `"hi there"`   | Concatenation; coerces args to strings |
+| `len`           | `(len "hello")` → `5`                      | Polymorphic; also works on lists and maps |
+| `empty?`        | `(empty? "")` → `true`                     | Polymorphic; also works on lists and maps |
+| `str-slice`     | `(str-slice "hello" 1 3)` → `"el"`         | Start (inclusive), end (exclusive) |
+| `str-index`     | `(str-index "hello" "ll")` → `2`           | Returns -1 if not found        |
 | `str-split`     | `(str-split "a,b,c" ",")` → `["a","b","c"]`| Returns a list                 |
 | `str-join`      | `(str-join ["a" "b"] ",")` → `"a,b"`       |                                |
 | `str-upper`     | `(str-upper "hi")` → `"HI"`                |                                |
@@ -537,39 +538,41 @@ numbers and strings (lexicographic).
 
 ### 6.5 List Operations
 
-| Function   | Example                                          | Notes                          |
-|------------|--------------------------------------------------|--------------------------------|
-| `head`     | `(head [1 2 3])` → `1`                          | Error on empty list            |
-| `tail`     | `(tail [1 2 3])` → `[2 3]`                      | Error on empty list            |
-| `cons`     | `(cons 0 [1 2])` → `[0 1 2]`                    | Prepend                        |
-| `concat`   | `(concat [1 2] [3 4])` → `[1 2 3 4]`            | List concatenation             |
-| `len`      | `(len [1 2 3])` → `3`                            | Also works on strings and maps |
-| `nth`      | `(nth [10 20 30] 1)` → `20`                      | Zero-indexed                   |
-| `empty?`   | `(empty? [])` → `true`                           | Also works on strings and maps |
-| `map`      | `(map (fn (x) (* x 2)) [1 2 3])` → `[2 4 6]`   | Returns new list               |
-| `filter`   | `(filter (fn (x) (> x 2)) [1 2 3 4])` → `[3 4]` |                               |
-| `fold`     | `(fold (fn (acc x) (+ acc x)) 0 [1 2 3])` → `6` | Left fold                     |
-| `flat-map` | `(flat-map (fn (x) [x x]) [1 2])` → `[1 1 2 2]` |                               |
-| `range`    | `(range 0 5)` → `[0 1 2 3 4]`                   | Start inclusive, end exclusive |
-| `reverse`  | `(reverse [1 2 3])` → `[3 2 1]`                 |                                |
-| `sort`     | `(sort [3 1 2])` → `[1 2 3]`                    | Natural ordering               |
-| `sort-by`  | `(sort-by (fn (x) (nth x 1)) data)`              | Sort by key function           |
-| `zip`      | `(zip [1 2] ["a" "b"])` → `[[1 "a"] [2 "b"]]`   |                                |
-| `enumerate`| `(enumerate ["a" "b"])` → `[[0 "a"] [1 "b"]]`   |                                |
+| Function  | Example                                          | Notes                          |
+|-----------|--------------------------------------------------|--------------------------------|
+| `head`    | `(head [1 2 3])` → `1`                          | Error on empty list            |
+| `tail`    | `(tail [1 2 3])` → `[2, 3]`                     | Error on empty list            |
+| `cons`    | `(cons 0 [1 2])` → `[0, 1, 2]`                  | Prepend                        |
+| `concat`  | `(concat [1 2] [3 4])` → `[1,2,3,4]`            | List concatenation             |
+| `len`     | `(len [1 2 3])` → `3`                            | Polymorphic; also works on strings and maps |
+| `nth`     | `(nth [10 20 30] 1)` → `20`                      | Zero-indexed                   |
+| `empty?`  | `(empty? [])` → `true`                           | Polymorphic; also works on strings and maps |
+| `map`     | `(map (fn (x) (* x 2)) [1 2 3])` → `[2,4,6]`   | Returns new list               |
+| `filter`  | `(filter (fn (x) (> x 2)) [1 2 3 4])` → `[3,4]` |                               |
+| `fold`    | `(fold (fn (acc x) (+ acc x)) 0 [1 2 3])` → `6` | Left fold                     |
+| `flat-map`| `(flat-map (fn (x) [x x]) [1 2])` → `[1,1,2,2]` |                               |
+| `range`   | `(range 0 5)` → `[0, 1, 2, 3, 4]`               | Start (inclusive), end (exclusive) |
+| `reverse` | `(reverse [1 2 3])` → `[3, 2, 1]`               |                                |
+| `sort`    | `(sort [3 1 2])` → `[1, 2, 3]`                  | Natural ordering               |
+| `sort-by` | `(sort-by (fn (x) (nth x 1)) data)` | Sort by key function |
+| `zip`     | `(zip [1 2] ["a" "b"])` → `[[1,"a"],[2,"b"]]`   |                                |
+| `enumerate`| `(enumerate ["a" "b"])` → `[[0,"a"],[1,"b"]]`  |                                |
 
 ### 6.6 Map Operations
 
-| Function  | Example                                       | Notes                        |
-|-----------|-----------------------------------------------|------------------------------|
-| `get`     | `(get m "key")` → value or `nil`              |                              |
-| `get-or`  | `(get-or m "key" default)` → value or default |                              |
-| `put`     | `(put m "key" val)` → new map                 | Returns a new map            |
-| `remove`  | `(remove m "key")` → new map                  | Returns a new map            |
-| `keys`    | `(keys m)` → list of keys                     |                              |
-| `vals`    | `(vals m)` → list of values                   |                              |
-| `entries` | `(entries m)` → list of [key value] lists     |                              |
-| `has?`    | `(has? m "key")` → `bool`                     |                              |
-| `merge`   | `(merge m1 m2)` → new map                     | m2 values overwrite m1       |
+| Function    | Example                                       | Notes                        |
+|-------------|-----------------------------------------------|------------------------------|
+| `get`       | `(get m "key")` → value or `nil`              |                              |
+| `get-or`    | `(get-or m "key" default)` → value or default |                              |
+| `put`       | `(put m "key" val)` → new map                 | Returns a new map            |
+| `remove`    | `(remove m "key")` → new map                  | Returns a new map            |
+| `keys`      | `(keys m)` → list of keys                     |                              |
+| `vals`      | `(vals m)` → list of values                   |                              |
+| `entries`   | `(entries m)` → list of [key, value] lists     |                              |
+| `has?`      | `(has? m "key")` → `bool`                     |                              |
+| `merge`     | `(merge m1 m2)` → new map                     | m2 values overwrite m1       |
+| `len`       | `(len {"a": 1})` → `1`                        | Number of entries; polymorphic — also works on lists and strings |
+| `empty?`    | `(empty? {})` → `true`                        | Polymorphic; also works on lists and strings |
 
 ### 6.7 Type Checking and Conversion
 
@@ -586,12 +589,15 @@ numbers and strings (lexicographic).
 | `number->string` | `(number->string 42)` → `"42"`  |                                |
 | `string->number` | `(string->number "3.14")` → `3.14` | Error if not parseable      |
 
-### 6.8 I/O
+### 6.8 I/O (Via FFI Convenience Wrappers)
 
-| Function  | Example             | Notes                         |
-|-----------|---------------------|-------------------------------|
-| `print`   | `(print "hello")`   | Prints to stdout, returns nil |
-| `println` | `(println "hello")` | Prints with newline           |
+These are thin wrappers around JS I/O, included as built-ins for
+convenience:
+
+| Function  | Example                    | Notes                      |
+|-----------|----------------------------|----------------------------|
+| `print`   | `(print "hello")`          | Prints to stdout, returns nil |
+| `println` | `(println "hello")`        | Prints with newline        |
 
 ---
 
@@ -604,7 +610,7 @@ only mechanism for side effects.
 
 ```
 (js "Math.sqrt" 144)             ; => 12.0
-(js "console.log" "hello")       ; => nil (side effect: prints)
+(js "console.log" "hello")      ; => nil (side effect: prints)
 (js "JSON.stringify" {"a": 1})   ; => "{\"a\":1}"
 ```
 
@@ -615,18 +621,19 @@ global scope (or via dot-path traversal). The remaining arguments are
 evaluated and passed to the function. Dodo values are converted to JS values
 at the boundary:
 
-| Dodo     | JS                   |
-|----------|----------------------|
-| `number` | `number`             |
-| `bool`   | `boolean`            |
-| `string` | `string`             |
-| `nil`    | `null`               |
-| `list`   | `Array`              |
-| `map`    | plain `Object`       |
-| `fn`     | `Function` (wrapped) |
+| Dodo           | JS                   |
+|----------------|----------------------|
+| `number`       | `number`             |
+| `bool`         | `boolean`            |
+| `string`       | `string`             |
+| `nil`          | `null`               |
+| `list`         | `Array`              |
+| `map`          | plain `Object`/`Map` |
+| `fn`           | `Function` (wrapped) |
 
 The return value is converted back from JS to Dodo using the inverse
-mapping. `undefined` maps to `nil`.
+mapping. `undefined` maps to `nil`. JS objects with non-string keys become
+Dodo maps.
 
 ### 7.2 Importing Modules
 
@@ -636,7 +643,9 @@ mapping. `undefined` maps to `nil`.
 ```
 
 - `(js/import <string>)` — calls `require()` with the given module name.
-- `(js/method <object> <method-name> args...)` — calls a method on a JS object.
+  Returns the module object as a Dodo map.
+- `(js/method <object> <method-name> args...)` — calls a method on a JS
+  object.
 
 ### 7.3 Accessing Properties
 
@@ -646,8 +655,8 @@ mapping. `undefined` maps to `nil`.
 (def a (js/get obj "a"))            ; => 1
 ```
 
-`(js/get <object-or-string> <property-name>)` — accesses a property. If
-the first argument is a string, it is treated as a global path.
+- `(js/get <object-or-string> <property-name>)` — accesses a property. If
+  the first argument is a string, it is treated as a global path.
 
 ### 7.4 Wrapping JS Libraries
 
@@ -662,6 +671,7 @@ The idiomatic way to use a JS library is to write thin Dodo wrappers:
 (defn write-file (path content)
   (js/method fs "writeFileSync" path content))
 
+; Now use the wrappers naturally:
 (def data (read-file "input.txt"))
 (write-file "output.txt" (str-upper data))
 ```
@@ -720,17 +730,20 @@ Errors are runtime exceptions. There is no `try/catch` in the language
 itself.
 
 The following conditions produce runtime errors:
-
 - Unbound identifier
 - Type mismatch (e.g., `(+ 1 "x")`)
 - Arity mismatch (wrong number of arguments)
 - Non-exhaustive match (no pattern matches)
 - Index out of bounds (`nth`, `str-slice`)
-- Division by zero
 - FFI errors (JS exceptions are re-raised as Dodo errors)
 
-**Design note:** For a v0.2, you might add a `(try expr (catch e handler))`
-form, but it's fine to skip for a weekend project.
+Division by zero is **not** an error: per IEEE 754 semantics (§6.1),
+`(/ 1 0)` evaluates to `Infinity`, `(/ -1 0)` to `-Infinity`, and
+`(/ 0 0)` to `NaN`.
+
+**Design note:** For a v0.2, you might add a
+`(try expr (catch e handler))` form, but it's fine to skip for a weekend
+project. Errors simply crash with a stack trace.
 
 ---
 
@@ -745,17 +758,21 @@ form, but it's fine to skip for a weekend project.
    {"name": "Charlie", "age": 25}
    {"name": "Diana", "age": 15}])
 
+; Filter adults (no if — use match!)
 (defn adult? (person)
   (match (>= (get person "age") 18)
     (true true)
     (false false)))
 
+; Format a greeting
 (defn greet (person)
   (str "Hello, " (get person "name") "!"))
 
+; Process
 (def adults (filter adult? people))
 (def greetings (map greet adults))
 
+; Print each greeting
 (defn print-all (items)
   (match items
     ([] nil)
@@ -774,17 +791,23 @@ A second example demonstrating map and list destructuring, guard clauses,
 and accumulator-style recursion:
 
 ```
+; Classify shapes by size using pattern matching
+
+; Map destructuring: match a specific key value, bind the rest
 (defn area (shape)
   (match shape
     ({"kind": "circle",   "radius": r}             (* 3.14159 r r))
     ({"kind": "rect",     "width": w, "height": h} (* w h))
     ({"kind": "triangle", "base": b,  "height": h} (/ (* b h) 2))))
 
+; Guard clause: branch on a computed property of the matched value
 (defn label (shape)
   (match shape
     (s when (> (area s) 100) (str "large " (get s "kind")))
     ({"kind": kind}          kind)))
 
+; Head/tail list destructuring with a guard on the head element;
+; accumulates into two lists passed as extra arguments
 (defn split-by-size (shapes)
   (let ((go (fn (remaining small large)
                (match remaining
@@ -799,6 +822,7 @@ and accumulator-style recursion:
    {"kind": "triangle", "base": 6,   "height": 4}
    {"kind": "circle",   "radius": 7}])
 
+; Destructure the [small large] pair returned by split-by-size
 (match (split-by-size shapes)
   ([small large]
     (do
@@ -806,6 +830,13 @@ and accumulator-style recursion:
       (fold (fn (_ s) (println (str "  " (label s)))) nil small)
       (println "large:")
       (fold (fn (_ s) (println (str "  " (label s)))) nil large))))
+; Output:
+; small:
+;   triangle
+;   circle
+; large:
+;   large circle
+;   large rect
 ```
 
 ---
@@ -849,17 +880,22 @@ pattern     = '_'
             | '[' list-pat* ('.' identifier)? ']'
             | '{' map-pat-entry* ('.' identifier)? '}' ;
 
-list-pat      = pattern ;
+list-pat    = pattern ;
+
 map-pat-entry = expr ':' pattern ;
 
 literal     = number | string | 'true' | 'false' | 'nil' ;
 
 identifier  = [a-zA-Z_?!][a-zA-Z0-9_?!>*=\-]*
-            | [+\-*/%<>=]+ ;
+            | [+\-*/%<>=][+\-*/%<>=]* ;
+              (* except reserved words: def, defn, fn, do, let,
+                 match, and, or, js, js/import, js/method, js/get,
+                 true, false, nil, when *)
 
 number      = '-'? [0-9]+ ('.' [0-9]+)? ;
 string      = '"' (escape | [^"\\])* '"' ;
 escape      = '\\' [\\\"ntr] ;
+comment     = ';' [^\n]* ;
 ```
 
 ---
@@ -876,7 +912,7 @@ true  false  nil
 
 Not applicable — Dodo has no infix operators. All operations use prefix
 notation with explicit parentheses.
-  </script>
+</script>
 
   <script>
   function escapeHtml(s) {

@@ -56,14 +56,14 @@ describe('enumeration', () => {
 });
 
 describe('size', () => {
-  it('map-len counts entries', () => {
-    assert.equal(dodo('(map-len {"a": 1, "b": 2})'), 2);
-    assert.equal(dodo('(map-len {})'), 0);
+  it('len counts entries', () => {
+    assert.equal(dodo('(len {"a": 1, "b": 2})'), 2);
+    assert.equal(dodo('(len {})'), 0);
   });
 
-  it('map-empty?', () => {
-    assert.equal(dodo('(map-empty? {})'), true);
-    assert.equal(dodo('(map-empty? {"a": 1})'), false);
+  it('empty? on maps', () => {
+    assert.equal(dodo('(empty? {})'), true);
+    assert.equal(dodo('(empty? {"a": 1})'), false);
   });
 });
 
