@@ -55,6 +55,18 @@ describe('enumeration', () => {
   });
 });
 
+describe('size', () => {
+  it('map-len counts entries', () => {
+    assert.equal(dodo('(map-len {"a": 1, "b": 2})'), 2);
+    assert.equal(dodo('(map-len {})'), 0);
+  });
+
+  it('map-empty?', () => {
+    assert.equal(dodo('(map-empty? {})'), true);
+    assert.equal(dodo('(map-empty? {"a": 1})'), false);
+  });
+});
+
 describe('merge', () => {
   it('combines two maps', () => {
     assert.equal(dodo('(get (merge {"a": 1} {"b": 2}) "a")'), 1);

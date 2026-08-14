@@ -1,6 +1,6 @@
 # Dodo Language Specification
 
-**Version:** 0.2.6 (Draft)
+**Version:** 0.2.7 (Draft)
 
 Dodo is a small, purely functional, expression-based programming language
 with Lisp-style syntax. It is designed to be implementable in a weekend as a
@@ -390,6 +390,7 @@ numbers and strings (lexicographic).
 |-----------------|--------------------------------------------|--------------------------------|
 | `str`           | `(str "hi" " " "there")` → `"hi there"`   | Concatenation; coerces args to strings |
 | `str-len`       | `(str-len "hello")` → `5`                  |                                |
+| `str-empty?`    | `(str-empty? "")` → `true`                 |                                |
 | `str-slice`     | `(str-slice "hello" 1 3)` → `"el"`         | Start (inclusive), end (exclusive) |
 | `str-index`     | `(str-index "hello" "ll")` → `2`           | Returns -1 if not found        |
 | `str-split`     | `(str-split "a,b,c" ",")` → `["a","b","c"]`| Returns a list                 |
@@ -409,9 +410,9 @@ numbers and strings (lexicographic).
 | `tail`    | `(tail [1 2 3])` → `[2, 3]`                     | Error on empty list            |
 | `cons`    | `(cons 0 [1 2])` → `[0, 1, 2]`                  | Prepend                        |
 | `concat`  | `(concat [1 2] [3 4])` → `[1,2,3,4]`            | List concatenation             |
-| `len`     | `(len [1 2 3])` → `3`                            | Also works on strings and maps |
+| `len`     | `(len [1 2 3])` → `3`                            | Lists only; see `str-len`, `map-len` |
 | `nth`     | `(nth [10 20 30] 1)` → `20`                      | Zero-indexed                   |
-| `empty?`  | `(empty? [])` → `true`                           | Also works on strings and maps |
+| `empty?`  | `(empty? [])` → `true`                           | Lists only; see `str-empty?`, `map-empty?` |
 | `map`     | `(map (fn (x) (* x 2)) [1 2 3])` → `[2,4,6]`   | Returns new list               |
 | `filter`  | `(filter (fn (x) (> x 2)) [1 2 3 4])` → `[3,4]` |                               |
 | `fold`    | `(fold (fn (acc x) (+ acc x)) 0 [1 2 3])` → `6` | Left fold                     |
@@ -436,6 +437,8 @@ numbers and strings (lexicographic).
 | `entries`   | `(entries m)` → list of [key, value] lists     |                              |
 | `has?`      | `(has? m "key")` → `bool`                     |                              |
 | `merge`     | `(merge m1 m2)` → new map                     | m2 values overwrite m1       |
+| `map-len`   | `(map-len {"a": 1})` → `1`                    | Number of entries            |
+| `map-empty?`| `(map-empty? {})` → `true`                    |                              |
 
 ### 6.7 Type Checking and Conversion
 

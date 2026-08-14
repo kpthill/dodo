@@ -25,6 +25,13 @@ describe('str-len', () => {
   });
 });
 
+describe('str-empty?', () => {
+  it('true only for the empty string', () => {
+    assert.equal(dodo('(str-empty? "")'), true);
+    assert.equal(dodo('(str-empty? "x")'), false);
+  });
+});
+
 describe('str-slice', () => {
   it('start inclusive, end exclusive', () => {
     assert.equal(dodo('(str-slice "hello" 1 3)'), 'el');

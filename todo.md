@@ -23,10 +23,11 @@
 
 ## Spec-Compliance Bugs (failing tests exist for each)
 - [ ] `print` is a stub that throws ("use println")
-- [ ] `sort` on numbers is lexicographic (`(sort [10 2 1])` → `[1 10 2]`);
+- [x] `sort` on numbers is lexicographic (`(sort [10 2 1])` → `[1 10 2]`);
       spec says natural ordering
 - [ ] `head` errors when the first element is `nil` (`??` treats it as missing)
-- [ ] `len` / `empty?` don't work on maps (spec says lists, strings, and maps)
+- [ ] Implement `str-empty?`, `map-len`, `map-empty?` (spec 0.2.7 made
+      `len` / `empty?` lists-only instead of polymorphic)
 - [ ] Match guards use JS truthiness instead of Dodo truthiness
       (guard result `0` should count as truthy)
 - [ ] `nth` out of bounds returns `undefined` instead of erroring (spec §10)

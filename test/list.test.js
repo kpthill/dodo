@@ -31,22 +31,9 @@ describe('basic access', () => {
     assert.equal(dodo('(len [])'), 0);
   });
 
-  it('len also works on strings and maps', () => {
-    assert.equal(dodo('(len "hello")'), 5);
-    assert.equal(dodo('(len {"a": 1, "b": 2})'), 2);
-    assert.equal(dodo('(len {})'), 0);
-  });
-
   it('empty?', () => {
     assert.equal(dodo('(empty? [])'), true);
     assert.equal(dodo('(empty? [1])'), false);
-  });
-
-  it('empty? also works on strings and maps', () => {
-    assert.equal(dodo('(empty? "")'), true);
-    assert.equal(dodo('(empty? "x")'), false);
-    assert.equal(dodo('(empty? {})'), true);
-    assert.equal(dodo('(empty? {"a": 1})'), false);
   });
 });
 
