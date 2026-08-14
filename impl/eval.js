@@ -1,4 +1,6 @@
 import { coreEnv } from './core.js';
+import { isTruthy, isHash, errorOut } from './shared.js';
+
 import { createRequire } from 'node:module';
 import 'path';
 
@@ -11,20 +13,16 @@ const getEnvValue = (name, env) => {
   for (let i = env.length - 1; i >= 0; i--) {
     if (env[i].hasOwnProperty(name)) return env[i][name];
   }
-  throw new Error("Value not found in env: " + name);
+  errorOut("Value not found in env: " + name);
 }
 
 export const evalDodo = (node, env=[coreEnv]) => {
   const fn = evaluators[node.type];
   if (!fn) {
-    throw new Error("NOT IMPLEMENTED: " + node.type);
+    errorOut("NOT IMPLEMENTED: " + node.type);
   };
   return fn(node, env);
 };
-
-function isTruthy(val) {
-  return !(val === false || val === null);
-}
 
 function makeLambda(args, body, env) {
   return (...innerArgs) => {
@@ -45,6 +43,13 @@ evaluators.program = (node, env) => node.exprs.map(expr => evalDodo(expr, env)).
 
 evaluators.fnCall = (node, env) => {
   const fn = evalDodo(node.fn, env);
+
+  // const fnArgs = node.fn.args ? node.fn.args.length : 0;
+  // const givenArgs = node.args ? node.args.length : 0;
+  // if (fnArgs !== givenArgs) {
+  //   (`Arity mismatch: function expecting ${fnArgs} args called with ${givenArgs} args`);
+  // }
+
   const evaledArgs = node.args.map(arg => evalDodo(arg, env));
   return fn.apply(null, evaledArgs);
 };
@@ -95,10 +100,6 @@ evaluators['let'] = (node, env) => {
     newEnv.at(-1)[id.name] = evalDodo(value, newEnv);
   });
   return evalDodo(node.expr, newEnv);
-};
-
-const isHash = (obj) => {
-  return typeof obj === 'object' && obj !== null && obj.constructor === Object;
 };
 
 const matchPattern = (pattern, env, matchVal) => {
@@ -161,7 +162,7 @@ const matchPattern = (pattern, env, matchVal) => {
         newVars
       ),
     });
-  default: throw new Error("pattern type unimplemented: " + pattern.type);
+  default: errorOut("pattern type unimplemented: " + pattern.type);
   };
 };
 
@@ -175,7 +176,7 @@ evaluators.branch = (node, env, matchVal) => {
 
   const newEnv = [...env, patternResult.newVars ?? {}];
 
-  if (node.when && !evalDodo(node.when, newEnv)) return fail;
+  if (node.when && !isTruthy(evalDodo(node.when, newEnv))) return fail;
   return { ...succeed, value: evalDodo(node.expr, newEnv) };
 };
 
@@ -186,7 +187,7 @@ evaluators.match = (node, env) => {
     if (branchVal.match) return branchVal.value;
   }
 
-  throw new Error("No Match Found");
+  errorOut("No Match Found");
 };
 
 evaluators.and = (node, env) => {

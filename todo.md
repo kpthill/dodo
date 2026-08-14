@@ -25,17 +25,17 @@
 - [ ] `print` is a stub that throws ("use println")
 - [x] `sort` on numbers is lexicographic (`(sort [10 2 1])` → `[1 10 2]`);
       spec says natural ordering
-- [ ] `head` errors when the first element is `nil` (`??` treats it as missing)
-- [ ] Make `len` / `empty?` polymorphic over lists, strings, and maps, and
+- [x] `head` errors when the first element is `nil` (`??` treats it as missing)
+- [x] Make `len` / `empty?` polymorphic over lists, strings, and maps, and
       remove `str-len` (spec 0.2.8 reversed 0.2.7's lists-only decision)
 - [ ] Match guards use JS truthiness instead of Dodo truthiness
       (guard result `0` should count as truthy)
-- [ ] `nth` out of bounds returns `undefined` instead of erroring (spec §10)
+- [x] `nth` out of bounds returns `undefined` instead of erroring (spec §10)
 - [ ] Type mismatch doesn't error: `(+ 1 "x")` → `"1x"` (spec §10)
 - [ ] Arity mismatch doesn't error: missing args silently bind `undefined`,
       extra args silently ignored (spec §10)
 
 ## Cleanup
 - [ ] Remove debug output from `dodo.js` (syntax-tree dump, `xcxc value =` prefix)
-- [ ] Dedup `isTruthy` between `impl/core.js` and `impl/eval.js`
-- [ ] `remove` in `impl/core.js` has an unused `def` parameter
+- [x] Dedup `isTruthy` between `impl/core.js` and `impl/eval.js`
+- [x] `remove` in `impl/core.js` has an unused `def` parameter
