@@ -5,9 +5,19 @@
 import { g } from './impl/grammar.js';
 import { evalDodo } from './impl/eval.js';
 import fs from 'fs';
+import { parseArgs } from 'node:util';
 
+const options = {
+  printTree: { type: 'boolean', short: 't' },
+};
+
+const { values: { printTree } } = parseArgs({options});
 const input = fs.readFileSync(process.stdin.fd, 'utf-8');
 const parsed = g.program(input);
 const syntaxTree = parsed.result;
-console.log(JSON.stringify(syntaxTree));
-console.log("xcxc value = ", evalDodo(syntaxTree));
+
+if (printTree) {
+  console.log(JSON.stringify(syntaxTree));
+} else {
+  evalDodo(syntaxTree);
+}

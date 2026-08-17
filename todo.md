@@ -28,7 +28,7 @@
 - [x] `head` errors when the first element is `nil` (`??` treats it as missing)
 - [x] Make `len` / `empty?` polymorphic over lists, strings, and maps, and
       remove `str-len` (spec 0.2.8 reversed 0.2.7's lists-only decision)
-- [ ] Match guards use JS truthiness instead of Dodo truthiness
+- [x] Match guards use JS truthiness instead of Dodo truthiness
       (guard result `0` should count as truthy)
 - [x] `nth` out of bounds returns `undefined` instead of erroring (spec §10)
 - [ ] Type mismatch doesn't error: `(+ 1 "x")` → `"1x"` (spec §10)
@@ -36,6 +36,6 @@
       extra args silently ignored (spec §10)
 
 ## Cleanup
-- [ ] Remove debug output from `dodo.js` (syntax-tree dump, `xcxc value =` prefix)
+- [x] Remove debug output from `dodo.js` (syntax-tree dump, `xcxc value =` prefix)
 - [x] Dedup `isTruthy` between `impl/core.js` and `impl/eval.js`
 - [x] `remove` in `impl/core.js` has an unused `def` parameter
