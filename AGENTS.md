@@ -65,3 +65,42 @@ If Patrick asks an agent to commit a file that falls in the implementation
 category, the agent should decline and remind him to commit it himself.
 Non-implementation files (spec, tests, REPL/frontend, AGENTS.md, todo.md)
 are fine for agents to commit as usual.
+
+## Browser REPL, Spec Viewer, and Deployment
+
+`repl.html`, `spec.html`, and `repl-shims.js` are agent-maintained browser
+front-ends. They contain no copies of the interpreter or spec:
+
+- `repl.html` imports the interpreter live as ES modules from `impl/`. The
+  Node-only imports in `impl/eval.js` (`node:module`, `path`) are redirected
+  to `repl-shims.js` by an import map in the HTML; `print`/`println` are
+  shadowed through the evaluator's env stack to capture output into the
+  page. Browser adaptations belong in these agent-owned files — never in
+  `impl/`. If a new Node-only import appears in `impl/`, add it to the
+  import map and shim rather than touching Patrick's code.
+- `spec.html` fetches `dodo-spec.md` at runtime and renders it client-side.
+
+Because of the module imports and fetch, these pages do NOT work from
+`file://` URLs. Preview locally with an HTTP server:
+
+```bash
+python3 -m http.server 8788   # then open http://localhost:8788/repl.html
+```
+
+### Deploying to the website
+
+Patrick's site repo (`~/Projects/kpthill.github.io`, deployed to thill.me
+via GitHub Pages) serves this repo as the `dodo/` git submodule; the pages
+are live at `/dodo/repl.html` and `/dodo/spec.html`. Pushing this repo alone
+changes nothing on the site — the site builds from the submodule commit
+pinned in the site repo. To deploy:
+
+```bash
+git push                        # 1. push dodo main
+cd ~/Projects/kpthill.github.io # 2. bump the submodule pin and push the site
+git submodule update --remote dodo && git add dodo && git commit -m "bump dodo" && git push
+```
+
+Pushing the site repo's `master` is what triggers the deploy. Since the
+pages load `impl/` and the spec live, the submodule bump is the only step
+needed after language changes — no re-syncing of the HTML files.

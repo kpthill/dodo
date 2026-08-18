@@ -106,611 +106,37 @@
     <button id="clear-btn">clear</button>
   </div>
 
+<script type="importmap">
+{
+  "imports": {
+    "node:module": "./repl-shims.js",
+    "path": "./repl-shims.js"
+  }
+}
+</script>
+<script>
+  // Fallback notice for browsers without import-map support (pre-2023).
+  if (!(window.HTMLScriptElement && HTMLScriptElement.supports &&
+        HTMLScriptElement.supports("importmap"))) {
+    document.addEventListener("DOMContentLoaded", function () {
+      var div = document.createElement("div");
+      div.textContent = "This REPL needs a browser with import-map support " +
+        "(Chrome/Edge 89+, Firefox 108+, Safari 16.4+).";
+      div.style.cssText = "color:#e06c75;padding:8px;font-family:monospace;";
+      document.body.prepend(div);
+    });
+  }
+</script>
+
 <script type="module">
 
-// ============================================================
-// parsing.js
-// ============================================================
-
-function trimWS(s) {
-  const trimmed = s.replace(/^[\s,]*/, '');
-  if (trimmed.match(/^;/)) {
-    return trimWS(trimmed.replace(/^;[^\r\n]*([\r\n]|$)/,''));
-  }
-  return trimmed;
-}
-
-function lit(str) {
-  const len = str.length;
-  return (input) => {
-    return (
-      input.slice(0, len) === str
-        ? { result: str, rest: input.slice(len) }
-        : null
-    );
-  }
-}
-
-function tok(str) {
-  const len = str.length;
-  return input => {
-    const head = input.slice(0, len);
-    const rest = input.slice(len);
-    if (head === str && !rest.match(/^[a-zA-Z0-9_?!>*\-+/%<=]/)) {
-      return { result: str, rest };
-    }
-    return null;
-  }
-}
-
-function regex(re) {
-  const fixed = re.source.match(/^\^/)
-        ? re
-        : new RegExp('^' + re.source);
-  return (input) => {
-    const match = fixed.exec(input);
-    if (!match) return null;
-    return { result: match[0], rest: input.slice(match[0].length) };
-  };
-}
-
-function seq() {
-  const parsers = [...arguments];
-  return (input) => {
-    return parsers.reduce((current, parser) => {
-      if (!current) return null;
-      const res = parser(trimWS(current.rest));
-      if (!res) return null;
-      return { result: current.result.concat([res.result]), rest: res.rest };
-    }, { result: [], rest: input })
-  };
-}
-
-function or() {
-  const parsers = [...arguments];
-  return (input) => {
-    for (var i = 0; i < parsers.length; i++) {
-      const res = parsers[i](input);
-      if (res) return res;
-    }
-    return null;
-  };
-}
-
-function many(parser) {
-  function recur(input, partial) {
-    const res = parser(trimWS(input));
-    if (res) return recur(res.rest, partial.concat([res.result]));
-    return { result: partial, rest: input };
-  }
-  return (input) => recur(input, []);
-}
-
-function flatten1(parser) {
-  return (input) => {
-    const res = parser(input);
-    if (res === null) return res;
-    return { result: res.result.flat(1), rest: res.rest };
-  }
-}
-
-function oneOrMore(parser) {
-  return flatten1(seq(parser, many(parser)));
-}
-
-const empty = (input) => ({ result: [], rest: input });
-
-const opt = (parser) => or(parser, empty);
-
-const barring = (parser, barred) => {
-  return (input) => {
-    const res = parser(input);
-    if (res === null) return null;
-    if (barred.includes(res.result)) return null;
-    return res;
-  };
-};
-
-const rule = (name, parserThunk, resultCleaner) => ((input) => {
-  const parser = parserThunk();
-  const res = parser(trimWS(input));
-  if (!res || !resultCleaner) return res;
-  return { result: resultCleaner(res.result), rest: res.rest };
-});
-
-// ============================================================
-// grammar.js
-// ============================================================
-
-const g = {};
-
-const emptyOpt = (optResult) => (optResult === []);
-const reserved = [
-  'def', 'defn', 'fn', 'do', 'let', 'match', 'and', 'or', 'js',
-  'js/import', 'js/method', 'js/get', 'true', 'false', 'nil',
-  'when'
-];
-
-g.program = rule('program', () =>
-  many(g.expr),
-  exprs => ({ type: 'program', exprs }),
-);
-
-g.expr = rule('expr', () =>
-  or(g.literal, g.identifier, g.special, g.fnCall, g.list, g.map)
-);
-
-g.fnCall = rule('fnCall', () =>
-  seq(lit('('), oneOrMore(g.expr), lit(')')),
-  ([open, [fn, ...args], close]) => ({ type: 'fnCall', fn, args }),
-);
-
-g.list = rule('list', () =>
-  seq(lit('['), many(g.expr), lit(']')),
-  ([open, exprs, close]) => ({ type: 'list', exprs }),
-);
-
-g.map = rule('map', () =>
-  seq(lit('{'), many(g.mapPair), lit('}')),
-  ([open, entries, close]) => ({ type: 'map', entries }),
-);
-
-g.mapPair = rule('mapPair', () =>
-  seq(g.expr, lit(':'), g.expr),
-  ([key, colon, value]) => ({ type: 'mapPair', key, value }),
-);
-
-g.special = rule('special', () =>
-  seq(lit('('),
-      or(g.def, g.defn, g.fn, g['do'], g['let'], g.match, g.and, g.or,
-         g.jsImport, g.jsMethod, g.jsGet, g.js),
-      lit(')')),
-  ([open, value, close]) => value,
-);
-
-g.def = rule('def', () =>
-  seq(tok('def'), g.identifier, g.expr),
-  ([def, name, value]) => ({ type: 'def', name, value }),
-);
-
-g.defn = rule('defn', () =>
-  seq(tok('defn'), g.identifier, lit('('), many(g.identifier), lit(')'), g.expr),
-  ([defn, name, open, args, close, body]) => ({ type: 'defn', name, args, body }),
-);
-
-g.fn = rule('fn', () =>
-  seq(tok('fn'), lit('('), many(g.identifier), lit(')'), g.expr),
-  ([fn, open, args, close, body]) => ({ type: 'fn', args, body }),
-);
-
-g['do'] = rule('do', () =>
-  seq(tok('do'), oneOrMore(g.expr)),
-  ([doTag, exprs]) => ({ type: 'do', exprs }),
-);
-
-g['let'] = rule('let', () =>
-  seq(tok('let'), lit('('), many(g.binding), lit(')'), g.expr),
-  ([letTag, open, bindings, close, expr]) => ({ type: 'let', bindings, expr }),
-);
-
-g.binding = rule('binding', () =>
-  seq(lit('('), g.identifier, g.expr, lit(')')),
-  ([open, id, value, close]) => ({ type: 'binding', id, value }),
-);
-
-g.match = rule('match', () =>
-  seq(tok('match'), g.expr, many(g.branch)),
-  ([match, expr, branches]) => ({ type: 'match', expr, branches }),
-);
-
-g.and = rule('and', () =>
-  seq(tok('and'), many(g.expr)),
-  ([and, exprs]) => ({ type: 'and', exprs }),
-);
-
-g.or = rule('or', () =>
-  seq(tok('or'), many(g.expr)),
-  ([or, exprs]) => ({ type: 'or', exprs }),
-);
-
-g.js = rule('js', () =>
-  seq(tok('js'), g.string, many(g.expr)),
-  ([tag, functionName, args]) => ({ type: 'js', functionName, args }),
-);
-
-g.jsGet = rule('jsGet', () =>
-  seq(tok('js/get'), g.expr, g.string),
-  ([tag, object, key]) => ({ type: 'jsGet', object, key }),
-);
-
-g.jsImport = rule('jsImport', () =>
-  seq(tok('js/import'), g.string),
-  ([tag, module]) => ({ type: 'jsImport', module }),
-);
-
-g.jsMethod = rule('jsMethod', () =>
-  seq(tok('js/method'), g.expr, g.string, many(g.expr)),
-  ([tag, object, methodName, args]) => ({ type: 'jsMethod', object, methodName, args }),
-);
-
-g.branch = rule('branch', () =>
-  seq(lit('('), g.pattern, opt(seq(tok('when'), g.expr)), g.expr, lit(')')),
-  ([open, pattern, maybeWhen, expr, close]) => {
-    const basic = { type: 'branch', pattern, expr };
-    if (emptyOpt(maybeWhen)) return basic;
-    const [label, whenExpr] = maybeWhen;
-    return { ...basic, when: whenExpr };
-  },
-);
-
-g.pattern = rule('pattern', () =>
-  or(g.patternDefault, g.literal, g.identifier, g.listPat, g.mapPat)
-);
-
-g.patternDefault = rule("patternDefault", () =>
-  tok('_'),
-  () => ({ type: "patternDefault" })
-);
-
-g.listPat = rule('listPat', () =>
-  seq(lit('['), many(g.pattern), opt(seq(lit('.'), g.identifier)), lit(']')),
-  ([_1, patterns, id_pattern, _2]) => {
-    if (emptyOpt(id_pattern)) return { type: 'listPat', patterns };
-    const [_, id] = id_pattern;
-    return { type: 'listPat', patterns, identifier: id };
-  }
-);
-
-g.mapPat = rule('mapPat', () =>
-  seq(lit('{'), many(g.mapEntry), opt(seq(lit('.'), g.identifier)), lit('}')),
-  ([open, entries, id_pattern, close]) => {
-    if (emptyOpt(id_pattern)) return { type: 'mapPat', entries };
-    const [_, id] = id_pattern;
-    return { type: 'mapPat', entries, identifier: id };
-  },
-);
-
-g.mapEntry = rule('mapEntry', () =>
-  seq(g.expr, lit(':'), g.pattern),
-  ([expr, colon, pattern]) => ({ type: 'mapEntry', key: expr, value: pattern }),
-);
-
-g.literal = rule('literal', () =>
-  or(tok('true'), tok('false'), tok('nil'), g.number, g.string),
-  res => {
-    if (typeof res === 'string') {
-      switch (res) {
-      case 'true':  return { type: 'bool', value: true };
-      case 'false': return { type: 'bool', value: false };
-      case 'nil':   return { type: 'nil' };
-      default: throw new Error('Literal value not recognized: ' + res);
-      }
-    }
-    return res;
-  }
-);
-
-g.identifier = rule('identifier', () =>
-  barring(
-    or(
-      regex(/[a-zA-Z_?!][a-zA-Z0-9_?!>*=-]*/),
-      regex(/[+\-*/%<>=]+/),
-    ),
-    reserved
-  ),
-  s => ({ type: 'identifier', name: s }),
-);
-
-g.number = rule('number', () =>
-  regex(/-?[0-9]+(\.[0-9]+)?/),
-  numStr => ({ type: 'number', value: Number(numStr) }),
-);
-
-g.string = rule('string', () =>
-  regex(/"(\\[\\\"ntr]|[^"\\])*"/),
-  s => ({ type: 'string', value: JSON.parse(s) }),
-);
-
-// ============================================================
-// core.js
-// ============================================================
-
-const _isPlainObject = value => value?.constructor === Object;
-
-function _isTruthyCore(val) {
-  return !(val === false || val === null);
-}
-
-function _isEqual(a, b) {
-  switch(typeof a) {
-  case 'number':
-  case 'string':
-  case 'function':
-    return a === b;
-  case 'boolean':
-    return (a === true && b === true) || (a === false && b === false);
-  case 'object':
-    if (Array.isArray(a) && Array.isArray(b)) {
-      return a.length === b.length && a.every((aElem, i) => _isEqual(aElem, b[i]));
-    } else if (a === null && b === null) {
-      return true;
-    } else if (_isPlainObject(a) && _isPlainObject(b)) {
-      return (
-        Object.keys(a).length === Object.keys(b).length &&
-          Object.keys(a).every(k => Object.hasOwn(b, k) && _isEqual(a[k], b[k]))
-      );
-    }
-    return false;
-  default:
-    throw new Error('isEqual: object has unrecognized type "' + typeof a + '"');
-  }
-}
-
-function _errorOut(s) {
-  throw new Error(s);
-}
-
-const _typeMap = {
-  'boolean': 'bool',
-  'number': 'number',
-  'string': 'string',
-  'function': 'fn',
-};
-
-// Captured println output for the REPL to display before the return value
-let _capturedPrintLines = [];
-
-const coreEnv = {
-  '+': (...args) => args.reduce((a, b) => a + b, 0),
-  '-': (...args) => {
-    switch (args.length) {
-    case 1: return -(args[0]);
-    case 2: return args[0] - args[1];
-    default: throw new Error("wrong number of arguments to `-`: " + args.length);
-    }
-  },
-  '*': (...args) => args.reduce((a, b) => a * b, 1),
-  '/': (num, denom) => num / denom,
-  '%': (div, mod) => div % mod,
-
-  '=': _isEqual,
-  '!=': (a, b) => !_isEqual(a, b),
-  '<': (a, b) => a < b,
-  '>': (a, b) => a > b,
-  '<=': (a, b) => a <= b,
-  '>=': (a, b) => a >= b,
-
-  not: b => !_isTruthyCore(b),
-
-  'str': (...args) => args.map(x => x ?? 'nil').join(""),
-  'str-len': s => s.length,
-  'str-slice': (s, start, end) => s.slice(start, end),
-  'str-index': (s, i) => (Number.isInteger(i) && i >= 0 && i < s.length) ? s.charAt(i) : -1,
-  'str-split': (s, substring) => s.split(s, substring),
-  'str-join': (strings, joiner) => strings.join(joiner),
-  'str-upper': s => s.toUpperCase(),
-  'str-lower': s => s.toLowerCase(),
-  'str-trim': s => s.trim(),
-  'str-contains?': (s, substr) => s.includes(substr),
-  'str-starts?': (s, start) => s.startsWith(start),
-  'str-ends?': (s, end) => s.endsWith(end),
-
-  'head': l => l[0] ?? _errorOut("head called on empty list"),
-  'tail': l => l.length > 0 ? l.slice(1) : _errorOut("tail called on empty list"),
-  'cons': (a, l) => [a, ...l],
-  'concat': (l1, l2) => [...l1, ...l2],
-  'len': l => l.length,
-  'nth': (l, n) => l[n],
-  'empty?': l => l.length === 0,
-  'map': (f, l) => l.map(f),
-  'filter': (f, l) => l.filter(elem => _isTruthyCore(f(elem))),
-  'fold': (f, init, l) => l.reduce(f, init),
-  'flat-map': (f, l) => l.flatMap(f),
-  'range': (s, e) => Array.from({length: e - s}, (_, i) => s + i),
-  'reverse': l => l.toReversed(),
-  'sort': l => l.toSorted(),
-  'sort-by': (f, l) => l.toSorted((x, y) => (f(x) <= f(y) ? -1 : 1)),
-  'zip': (l1, l2) => l1.length === l2.length ? l1.map((e, i) => [e, l2[i]]) : _errorOut("Lists to be zipped must have equal length"),
-  'enumerate': l => l.map((e, i) => [i, e]),
-
-  get: (map, key) => map[key] ?? null,
-  "get-or": (map, key, def) => map[key] ?? def,
-  put: (map, key, val) => ({ ...map, [key]: val }),
-  remove: (map, key, def) => {
-    const { [key]: deleted, ...rest } = map;
-    return rest;
-  },
-  keys: (map) => Object.keys(map),
-  vals: (map) => Object.values(map),
-  entries: (map) => Object.entries(map),
-  "has?": (map, key) => (map[key] !== undefined),
-  merge: (map1, map2) => ({...map1, ...map2}),
-
-  'type': x => typeof x === 'object'
-    ? (x === null ? "nil" : (Array.isArray(x) ? "list" : "map"))
-    : _typeMap[typeof x],
-  'number?': x => typeof x === "number",
-  'string?': x => typeof x === "string",
-  'bool?': x => typeof x === "boolean",
-  'list?': x => Array.isArray(x),
-  'map?': x => x !== null && typeof x === 'object' && !Array.isArray(x),
-  'nil?': x => x === null,
-  'fn?': x => typeof x === "function",
-  'number->string': n => n.toString(),
-  'string->number': n => {
-    const res = Number(n);
-    if (isNaN(res)) _errorOut(n + " is not a number");
-    return res;
-  },
-
-  print: s => { throw new Error("print is unimplemented, use println"); },
-  println: s => { _capturedPrintLines.push(String(s)); },
-};
-
-// ============================================================
-// eval.js
-// ============================================================
-
-const evaluators = {};
-
-const getEnvValue = (name, env) => {
-  for (var i = env.length - 1; i >= 0; i--) {
-    if (env[i].hasOwnProperty(name)) return env[i][name];
-  }
-  throw new Error("Value not found in env: " + name);
-}
-
-const evalDodo = (node, env=[coreEnv]) => {
-  const fn = evaluators[node.type];
-  if (!fn) throw new Error("NOT IMPLEMENTED: " + node.type);
-  return fn(node, env);
-};
-
-function isTruthy(val) {
-  return !(val === false || val === null);
-}
-
-function makeLambda(args, body, env) {
-  return (...innerArgs) => {
-    const newBindings = {};
-    for (var i = 0; i < args.length; i++) {
-      newBindings[args[i].name] = innerArgs[i];
-    }
-    return evalDodo(body, [...env, newBindings]);
-  }
-}
-
-evaluators.program = (node, env) => node.exprs.map(expr => evalDodo(expr, env)).at(-1);
-
-evaluators.fnCall = (node, env) => {
-  const fn = evalDodo(node.fn, env);
-  const evaledArgs = node.args.map(arg => evalDodo(arg, env));
-  return fn.apply(null, evaledArgs);
-};
-
-evaluators.list = (node, env) => node.exprs.map(expr => evalDodo(expr, env));
-
-evaluators.map = (node, env) => {
-  const res = {};
-  node.entries.forEach(entry => {
-    res[evalDodo(entry.key, env)] = evalDodo(entry.value, env);
-  });
-  return res;
-};
-
-evaluators.def = (node, env) => {
-  env.at(-1)[node.name.name] = evalDodo(node.value, env);
-  return null;
-};
-
-evaluators.defn = (node, env) => {
-  env.at(-1)[node.name.name] = makeLambda(node.args, node.body, env);
-  return null;
-};
-
-evaluators.fn = (node, env) => makeLambda(node.args, node.body, env);
-
-evaluators['do'] = (node, env) => {
-  const newEnv = [...env, {}];
-  let retval = null;
-  for (const expr of node.exprs) retval = evalDodo(expr, newEnv);
-  return retval;
-};
-
-evaluators['let'] = (node, env) => {
-  const newEnv = [...env, {}];
-  node.bindings.forEach(({id, value}) => {
-    newEnv.at(-1)[id.name] = evalDodo(value, newEnv);
-  });
-  return evalDodo(node.expr, newEnv);
-};
-
-evaluators.match = (node, env) => {
-  const matchVal = evalDodo(node.expr, env);
-  for (const branch of node.branches) {
-    const branchVal = evaluators.branch(branch, env, matchVal);
-    if (branchVal.match) return branchVal.value;
-  }
-  throw new Error("No Match Found");
-};
-
-evaluators.branch = (node, env, matchVal) => {
-  const fail = { match: false };
-  const pattern = node.pattern;
-
-  switch (pattern.type) {
-  case "patternDefault":
-    if (node.when && !evalDodo(node.when, env)) return fail;
-    return { match: true, value: evalDodo(node.expr, env) };
-  case "bool":
-  case "number":
-  case "string":
-  case "nil":
-    if (evalDodo(pattern, env) !== matchVal) return fail;
-    if (node.when && !evalDodo(node.when, env)) return fail;
-    return { match: true, value: evalDodo(node.expr, env) };
-  case "identifier":
-    const newEnv = [...env, {[pattern.name]: matchVal}];
-    if (node.when && !evalDodo(node.when, newEnv)) return fail;
-    return { match: true, value: evalDodo(node.expr, newEnv) };
-  case "listPat":
-    if (!Array.isArray(matchVal)) return fail;
-    if (pattern.patterns.length !== matchVal.length) return fail;
-    if (!pattern.patterns.every((elem, i) => evalDodo(elem, env) === matchVal[i])) return fail;
-    return { match: true, value: evalDodo(node.expr, env) };
-  case "mapPat":
-  default: throw new Error("pattern type unimplemented: " + pattern.type);
-  }
-};
-
-evaluators.and = (node, env) => {
-  let lastVal = true;
-  for (const expr of node.exprs) {
-    lastVal = evalDodo(expr, env);
-    if (!isTruthy(lastVal)) return lastVal;
-  }
-  return lastVal;
-};
-
-evaluators.or = (node, env) => {
-  let lastVal = false;
-  for (const expr of node.exprs) {
-    lastVal = evalDodo(expr, env);
-    if (isTruthy(lastVal)) return lastVal;
-  }
-  return lastVal;
-};
-
-evaluators.string = (node, env) => node.value;
-evaluators.number = (node, env) => node.value;
-evaluators.bool   = (node, env) => node.value;
-evaluators.nil    = (node, env) => null;
-
-evaluators.identifier = (node, env) => getEnvValue(node.name, env);
-
-evaluators.js = (node, env) => {
-  const fName = evalDodo(node.functionName, env);
-  const fn = eval(fName);
-  const args = node.args.map(arg => evalDodo(arg, env));
-  return fn.apply(null, args);
-};
-
-evaluators.jsGet = (node, env) => {
-  const object = eval(evalDodo(node.object, env));
-  const key = evalDodo(node.key, env);
-  return object[key];
-};
-
-evaluators.jsImport = (node, env) => {
-  throw new Error("js/import is not available in the browser REPL");
-};
-
-evaluators.jsMethod = (node, env) => {
-  const object = evalDodo(node.object, env);
-  const methodName = evalDodo(node.methodName, env);
-  const args = node.args.map(arg => evalDodo(arg, env));
-  return object[methodName].apply(object, args);
-};
+// The interpreter is loaded live from impl/ (Patrick's code) — no copies.
+// Node-only imports inside eval.js are redirected to repl-shims.js by the
+// import map above. Requires serving over HTTP (file:// will not work).
+import { trimWS } from "./impl/parsing.js";
+import { g } from "./impl/grammar.js";
+import { coreEnv } from "./impl/core.js";
+import { evalDodo } from "./impl/eval.js";
 
 // ============================================================
 // REPL
@@ -730,8 +156,26 @@ function displayValue(v) {
   return String(v);
 }
 
-// Persistent top-level env so def/defn accumulate across entries
-const replEnv = [coreEnv, {}];
+// Browser print/println: shadow the core builtins through the env stack
+// (getEnvValue searches innermost-last first), so impl/core.js stays untouched.
+// print appends without a newline, println with one; both return nil (spec).
+let capturedOutput = '';
+const replIO = {
+  print:   s => { capturedOutput += String(s); return null; },
+  println: s => { capturedOutput += String(s) + '\n'; return null; },
+};
+
+// Persistent top-level env so def/defn accumulate across entries.
+// def/defn write to env.at(-1), so user definitions land in the trailing {}.
+const replEnv = [coreEnv, replIO, {}];
+
+function flushCapturedOutput(entry) {
+  if (!capturedOutput) return;
+  for (const line of capturedOutput.replace(/\n$/, '').split('\n')) {
+    entry.appendChild(addLine('printed', line));
+  }
+  capturedOutput = '';
+}
 
 const output = document.getElementById('output');
 const input  = document.getElementById('input');
@@ -756,13 +200,16 @@ function evaluate(source, label) {
       throw new Error('Parse error' + (parsed ? ` near: ${parsed.rest.slice(0,20)}` : ''));
     }
 
-    _capturedPrintLines = [];
-    const result = evalDodo(parsed.result, replEnv);
-
-    for (const line of _capturedPrintLines) {
-      entry.appendChild(addLine('printed', line));
+    capturedOutput = '';
+    let result;
+    try {
+      result = evalDodo(parsed.result, replEnv);
+    } finally {
+      flushCapturedOutput(entry); // show output printed before an error, too
     }
-    if (result !== null) entry.appendChild(addLine('out', displayValue(result)));
+    if (result !== null && result !== undefined) {
+      entry.appendChild(addLine('out', displayValue(result)));
+    }
   } catch (e) {
     entry.appendChild(addLine('err', e.message));
   }
